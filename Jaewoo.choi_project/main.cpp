@@ -4,6 +4,7 @@ int main(void)
 {
     Engine engine;
 
+    engine.init();
     while (!engine.ShouldClose())
     {
         engine.Update();
