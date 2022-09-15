@@ -1,4 +1,4 @@
-//Name: Hyosang Jung, Jaewoo Choi
+//Name: Jaewoo Choi
 //Assignment name: Class project
 //Course name: CS250
 //Term & Year : 2022&Spring
@@ -14,7 +14,7 @@
 \date   YOUR_COMPLETION_DATE
 */
 /******************************************************************************/
-
+#define _CRT_SECURE_NO_WARNINGS
 #include "Mesh.h"
 #include "glhelper.h"
 /*  Function prototype(s) */
@@ -467,6 +467,109 @@ void Mesh::setup_shdrpgm(std::string shader)
     }
 }
 
+GLuint Mesh::LoadShaders(const char* vertex_file_path, const char* fragment_file_path)
+{
+    // Create the shaders
+    GLuint VertexShaderID = glCreateShader(GL_VERTEX_SHADER);
+    GLuint FragmentShaderID = glCreateShader(GL_FRAGMENT_SHADER);
+
+    // Read the Vertex Shader code from the file
+    std::string VertexShaderCode;
+    std::ifstream VertexShaderStream(vertex_file_path, std::ios::in);
+    if (VertexShaderStream.is_open()) {
+        std::string Line;
+        while (getline(VertexShaderStream, Line))
+            VertexShaderCode += "\n" + Line;
+        VertexShaderStream.close();
+    }
+    else {
+        printf("Impossible to open %s. Are you in the right directory ? Don't forget to read the FAQ !\n", vertex_file_path);
+        getchar();
+        return 0;
+    }
+
+    // Read the Fragment Shader code from the file
+    std::string FragmentShaderCode;
+    std::ifstream FragmentShaderStream(fragment_file_path, std::ios::in);
+    if (FragmentShaderStream.is_open()) {
+        std::string Line;
+        while (getline(FragmentShaderStream, Line))
+            FragmentShaderCode += "\n" + Line;
+        FragmentShaderStream.close();
+    }
+
+    GLint Result = GL_FALSE;
+    int InfoLogLength;
+
+
+    // Compile Vertex Shader
+    printf("Compiling shader : %s\n", vertex_file_path);
+    char const* VertexSourcePointer = VertexShaderCode.c_str();
+    glShaderSource(VertexShaderID, 1, &VertexSourcePointer, nullptr);
+    glCompileShader(VertexShaderID);
+
+    // Check Vertex Shader
+    glGetShaderiv(VertexShaderID, GL_COMPILE_STATUS, &Result);
+    glGetShaderiv(VertexShaderID, GL_INFO_LOG_LENGTH, &InfoLogLength);
+    if (InfoLogLength > 0) {
+        std::vector<char> VertexShaderErrorMessage(InfoLogLength + 1);
+        glGetShaderInfoLog(VertexShaderID, InfoLogLength, nullptr, &VertexShaderErrorMessage[0]);
+        printf("%s\n", &VertexShaderErrorMessage[0]);
+    }
+
+
+    // Compile Fragment Shader
+    printf("Compiling shader : %s\n", fragment_file_path);
+    char const* FragmentSourcePointer = FragmentShaderCode.c_str();
+    glShaderSource(FragmentShaderID, 1, &FragmentSourcePointer, nullptr);
+    glCompileShader(FragmentShaderID);
+
+    // Check Fragment Shader
+    glGetShaderiv(FragmentShaderID, GL_COMPILE_STATUS, &Result);
+    glGetShaderiv(FragmentShaderID, GL_INFO_LOG_LENGTH, &InfoLogLength);
+    if (InfoLogLength > 0) {
+        std::vector<char> FragmentShaderErrorMessage(InfoLogLength + 1);
+        glGetShaderInfoLog(FragmentShaderID, InfoLogLength, nullptr, &FragmentShaderErrorMessage[0]);
+        printf("%s\n", &FragmentShaderErrorMessage[0]);
+    }
+
+
+    // Link the program
+    printf("Linking program\n");
+    GLuint ProgramID = glCreateProgram();
+    glAttachShader(ProgramID, VertexShaderID);
+    glAttachShader(ProgramID, FragmentShaderID);
+    glLinkProgram(ProgramID);
+
+    // Check the program
+    glGetProgramiv(ProgramID, GL_LINK_STATUS, &Result);
+    glGetProgramiv(ProgramID, GL_INFO_LOG_LENGTH, &InfoLogLength);
+    if (InfoLogLength > 0) {
+        std::vector<char> ProgramErrorMessage(InfoLogLength + 1);
+        glGetProgramInfoLog(ProgramID, InfoLogLength, nullptr, &ProgramErrorMessage[0]);
+        printf("%s\n", &ProgramErrorMessage[0]);
+    }
+
+    std::vector<std::pair<GLenum, std::string>> shdr_files;
+    shdr_files.push_back(std::make_pair(GL_VERTEX_SHADER, vertex_file_path));
+    shdr_files.push_back(std::make_pair(GL_FRAGMENT_SHADER, fragment_file_path));
+    renderProg.CompileLinkValidate(shdr_files);
+    if (GL_FALSE == renderProg.IsLinked())
+    {
+        std::cout << "Unable to compile/link/validate shader programs" << "\n";
+        std::cout << renderProg.GetLog() << std::endl;
+        std::exit(EXIT_FAILURE);
+    }
+
+    glDetachShader(ProgramID, VertexShaderID);
+    glDetachShader(ProgramID, FragmentShaderID);
+
+    glDeleteShader(VertexShaderID);
+    glDeleteShader(FragmentShaderID);
+
+    return ProgramID;
+}
+
 void Mesh::setup_mesh()
 {
     glUseProgram(renderProg.GetHandle());
@@ -480,7 +583,7 @@ void Mesh::setup_mesh()
     ViewPosLoc = glGetUniformLocation(renderProg.GetHandle(), "viewPos");
 
     SendVertexData();
-
+    
     /*  Bind framebuffer to 0 to render to the screen (by default already 0) */
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
@@ -526,12 +629,13 @@ void Mesh::draw(glm::vec3 color, glm::mat4 view, glm::mat4 projection, glm::vec3
 
 }
 
-void Mesh::init(std::string shader, glm::vec3 Pos, glm::vec3 Scale, glm::vec3 Rotate)
+void Mesh::init(const char* vertex_file_path, const char* fragment_file_path, glm::vec3 Pos, glm::vec3 Scale, glm::vec3 Rotate)
 {
     position = Pos;
     scale = Scale;
     rotation = Rotate;
-    setup_shdrpgm(shader);
+    LoadShaders(vertex_file_path, fragment_file_path);
+    //loadOBJ("../object/4Sphere.obj");
     setup_mesh();
 }
 
@@ -543,16 +647,18 @@ void Mesh::SendVertexData()
     glGenBuffers(1, &VBO);
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
     /*  Copy vertex attributes to GPU */
-    glBufferData(GL_ARRAY_BUFFER,
-        static_cast<GLsizeiptr>(numVertices) * static_cast<GLsizeiptr>(vertexSize), &vertexBuffer[0],
-        GL_DYNAMIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, vertexBuffer.size() * sizeof(glm::vec3), &vertexBuffer[0], GL_DYNAMIC_DRAW);
+    //glBufferData(GL_ARRAY_BUFFER,
+    //    static_cast<GLsizeiptr>(numVertices) * static_cast<GLsizeiptr>(vertexSize), &vertexBuffer[0],
+    //    GL_DYNAMIC_DRAW);
 
     glGenBuffers(1, &IBO);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, IBO);
     /*  Copy vertex indices to GPU */
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER,
-        static_cast<GLsizeiptr>(numIndices) * static_cast<GLsizeiptr>(indexSize), &indexBuffer[0],
-        GL_DYNAMIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, indexBuffer.size() * sizeof(glm::vec3), &indexBuffer[0], GL_DYNAMIC_DRAW);
+    //glBufferData(GL_ELEMENT_ARRAY_BUFFER,
+    //    static_cast<GLsizeiptr>(numIndices) * static_cast<GLsizeiptr>(indexSize), &indexBuffer[0],
+    //    GL_DYNAMIC_DRAW);
 
     /*  Send vertex attributes to shaders */
     for (int i = 0; i < numAttribs; ++i)
@@ -560,4 +666,56 @@ void Mesh::SendVertexData()
         glEnableVertexAttribArray(vLayout[i].location);
         glVertexAttribPointer(vLayout[i].location, vLayout[i].size, vLayout[i].type, vLayout[i].normalized, vertexSize, (void*)(uintptr_t)vLayout[i].offset);
     }
+}
+
+
+Mesh loadOBJ(const char* path)
+{
+    Mesh mesh;
+    Vertex v;
+    
+    FILE* file = fopen(path, "r");
+    if (file == NULL) {
+        printf("There is no suitable file!\n");
+        //return false;
+    }
+
+    while (true) {
+
+        char lineHeader[128];
+        // read the first word of the line
+        int res = fscanf(file, "%s", lineHeader);
+        if (res == EOF)
+            break; // EOF = End Of File. Quit the loop.
+
+        // else : parse lineHeader
+
+        if (strcmp(lineHeader, "v") == 0) {
+
+            fscanf(file, "%f %f %f\n", &v.pos.x, &v.pos.y, &v.pos.z);
+            //out_vertices.push_back(v);
+            addVertex(mesh, v);
+        }
+        else if (strcmp(lineHeader, "f") == 0) {
+            std::string vertex1, vertex2, vertex3;
+            unsigned int vertexIndex[3];
+            int matches = fscanf(file, "%d %d %d \n", &vertexIndex[0], &vertexIndex[1], &vertexIndex[2]);
+            if (matches != 3) {
+                printf("File can't be read by our simple parser : ( Try exporting with other options\n");
+                //return false;
+            }
+            mesh.vertexIndices.push_back(vertexIndex[0]);
+            mesh.vertexIndices.push_back(vertexIndex[1]);
+            mesh.vertexIndices.push_back(vertexIndex[2]);
+
+            // For each vertex of each triangle
+        }
+    }
+    size_t sizeOfIndicies = mesh.vertexIndices.size();
+    for (unsigned int i = 0; i < sizeOfIndicies; i++) {
+        addIndex(mesh, mesh.vertexIndices[i]);
+    }
+
+    //glBufferData(GL_ARRAY_BUFFER, out_vertices.size() * sizeof(glm::vec3), &out_vertices[0], GL_STATIC_DRAW);
+    return mesh;
 }

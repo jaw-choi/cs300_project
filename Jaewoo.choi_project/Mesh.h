@@ -92,8 +92,14 @@ struct Mesh
     glm::vec3 scale = { 1,1,1 };
     glm::vec3 rotation{ 0,0,0 };
 
+    std::vector< unsigned int > vertexIndices;
+    std::vector< glm::vec3 > temp_vertices;
 
-    void init(std::string shader, glm::vec3 Pos = { 0,0,0 }, glm::vec3 Scale = { 1,1,1 }, glm::vec3 Rotate = { 0,0,0 });
+
+
+    
+    GLuint LoadShaders(const char* vertex_file_path, const char* fragment_file_path);
+    void init(const char* vertex_file_path, const char* fragment_file_path, glm::vec3 Pos = { 0,0,0 }, glm::vec3 Scale = { 1,1,1 }, glm::vec3 Rotate = { 0,0,0 });
     void SendVertexData();
     void setup_shdrpgm(std::string shader);
     void setup_mesh();
@@ -118,6 +124,7 @@ struct Mesh
     bool update_flag = true;
 };
 
+Mesh loadOBJ(const char* path);
 Mesh CreatePlane(int stacks, int slices);
 Mesh CreateCube(int stacks, int slices);
 Mesh CreateSphere(int stacks, int slices);

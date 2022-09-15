@@ -24,8 +24,16 @@ public:
     void Draw();
     void OnImGuiRender();
     void UnLoad();
-    void SetView();
 
+
+    void SetView();
+    //bool loadOBJ(
+    //    const char* path,
+    //    std::vector < glm::vec3 >& out_vertices,
+    //    std::vector < glm::vec3 >& out_indicies,
+    //    std::vector < glm::vec2 >& out_uvs,
+    //    std::vector < glm::vec3 >& out_normals
+    //);
     std::vector<Mesh> meshes;
 
     const GLfloat bgColor[4] = { 0.0f, 0.0f, 0.0f, 1.0f };
@@ -38,6 +46,17 @@ private:
     glm::vec3 eye;
     glm::vec3 light;
 
+    std::vector< unsigned int > vertexIndices;
+    std::vector< glm::vec3 > temp_vertices;
+
+
+    // Read our .obj file
+    std::vector< glm::vec3 > vertices;
+    std::vector< glm::vec3 > indicies;
+    std::vector< glm::vec2 > uvs;
+    std::vector< glm::vec3 > normals; // Won't be used at the moment.
+
+    bool res;
     //bool meshSwitch[NUM_MESHES] = { true,true,true,true,true/*,true*/ };
     //bool is_switch_pressed(const char* buttonName, bool& buttonType);
     //void onOffSwitch();

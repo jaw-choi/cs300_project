@@ -55,10 +55,10 @@ void Engine::Draw()
     ImGui_ImplGlfw_NewFrame();
     ImGui::NewFrame();
 
+    cube->Draw();
     ImGui::Begin("Demo");
     ImGui::Render();
     ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
-    cube->Draw();
 
     glfwSwapBuffers(GLHelper::ptr_window);
 }
