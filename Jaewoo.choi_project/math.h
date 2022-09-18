@@ -4,11 +4,11 @@
 \file   math.hpp
 \par    Purpose: Placeholder for math constants/functions
 \par    Language: C++
-\par    Platform: Visual Studio 2013, Windows 7 64-bit
-\author Sang Le, YOUR_NAME
-\par    Email: sang.le\@digipen.edu, YOUR_EMAIL_ID
-\par    DigiPen login: sang.le, YOUR_LOGIN_ID
-\date   YOUR_COMPLETION_DATE
+\par    Platform: Visual Studio 2019, Windows 10 64-bit
+\author Sang Le, jaewoo.choi
+\par    Email: sang.le\@digipen.edu, jaewoo.choi@digipen.edu
+\par    DigiPen login: sang.le, jaewoo.choi
+\date   15/09/2022
 */
 /******************************************************************************/
 #include <cmath>

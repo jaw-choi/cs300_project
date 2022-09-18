@@ -18,13 +18,14 @@ vec3 viewDir = normalize(viewPos - FragPos);
 
 void main(void)
 {
-	if(color.r<0) //use normal vector color
-	{
-		   outColor =  vec4(NRM,1);
-	}
-	else
-	  {
 				outColor =  color * vec4(lightColor,1.0);
-				outColor= diff * outColor ;
-	 }
+				outColor = diff * outColor ;
+	//if(color.r<0) //use normal vector color
+	//{
+	//	   outColor =  vec4(NRM,1);
+	//}
+	//else
+	//  {
+				
+	// }
 }

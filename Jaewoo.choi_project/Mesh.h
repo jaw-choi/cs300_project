@@ -3,11 +3,11 @@
 \file   mesh.hpp
 \par    Purpose: Library for generating polygonal meshes.
 \par    Language: C++
-\par    Platform: Visual Studio 2013, Windows 7 64-bit
+\par    Platform: Visual Studio 2019, Windows 10 64-bit
 \author Sang Le
-\par    Email: sang.le\@digipen.edu
-\par    DigiPen login: sang.le
-\date   8/1/2015
+\par    Email: sang.le\@digipen.edu, jaewoo.choi@digipen.edu
+\par    DigiPen login: sang.le, jaewoo.choi
+\date   15/09/2022
 */
 /******************************************************************************/
 #pragma once
@@ -15,6 +15,7 @@
 #include <GL/glew.h> 
 #include"math.h"
 #include"glslshader.h"
+
 
 
 
@@ -91,11 +92,6 @@ struct Mesh
     glm::vec3 position{ 0,0,0 };
     glm::vec3 scale = { 1,1,1 };
     glm::vec3 rotation{ 0,0,0 };
-
-    std::vector< unsigned int > vertexIndices;
-    std::vector< glm::vec3 > temp_vertices;
-
-
 
     
     GLuint LoadShaders(const char* vertex_file_path, const char* fragment_file_path);

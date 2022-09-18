@@ -1,7 +1,7 @@
 //Name: Jaewoo Choi
 //Assignment name: Class project
-//Course name: CS250
-//Term & Year : 2022&Spring
+//Course name: CS300
+//Term & Year : 2022&Fall
 /******************************************************************************/
 /*!
 \file   mesh.cpp
@@ -613,7 +613,7 @@ void Mesh::draw(glm::vec3 color, glm::mat4 view, glm::mat4 projection, glm::vec3
     model = glm::rotate(model, rotation.x, glm::vec3(1.0f, 0.0f, 0.0f));
     model = glm::rotate(model, rotation.y, glm::vec3(0.0f, 1.0f, 0.0f));
     model = glm::rotate(model, rotation.z, glm::vec3(0.0f, 0.0f, 1.0f));
-    model = glm::scale(model, { scale.x,scale.y,scale.z });
+    model = glm::scale(model, { 11.f,11.f,11.f});
 
 
 
@@ -635,7 +635,6 @@ void Mesh::init(const char* vertex_file_path, const char* fragment_file_path, gl
     scale = Scale;
     rotation = Rotate;
     LoadShaders(vertex_file_path, fragment_file_path);
-    //loadOBJ("../object/4Sphere.obj");
     setup_mesh();
 }
 
@@ -647,18 +646,13 @@ void Mesh::SendVertexData()
     glGenBuffers(1, &VBO);
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
     /*  Copy vertex attributes to GPU */
-    glBufferData(GL_ARRAY_BUFFER, vertexBuffer.size() * sizeof(glm::vec3), &vertexBuffer[0], GL_DYNAMIC_DRAW);
-    //glBufferData(GL_ARRAY_BUFFER,
-    //    static_cast<GLsizeiptr>(numVertices) * static_cast<GLsizeiptr>(vertexSize), &vertexBuffer[0],
-    //    GL_DYNAMIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, static_cast<GLsizeiptr>(numVertices) * static_cast < GLsizeiptr>(vertexSize), &vertexBuffer[0], GL_DYNAMIC_DRAW);
 
     glGenBuffers(1, &IBO);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, IBO);
     /*  Copy vertex indices to GPU */
-    glBufferData(GL_ARRAY_BUFFER, indexBuffer.size() * sizeof(glm::vec3), &indexBuffer[0], GL_DYNAMIC_DRAW);
-    //glBufferData(GL_ELEMENT_ARRAY_BUFFER,
-    //    static_cast<GLsizeiptr>(numIndices) * static_cast<GLsizeiptr>(indexSize), &indexBuffer[0],
-    //    GL_DYNAMIC_DRAW);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, static_cast<GLsizeiptr>(numIndices) * static_cast < GLsizeiptr>(indexSize), &indexBuffer[0], GL_DYNAMIC_DRAW);
+
 
     /*  Send vertex attributes to shaders */
     for (int i = 0; i < numAttribs; ++i)
@@ -677,7 +671,6 @@ Mesh loadOBJ(const char* path)
     FILE* file = fopen(path, "r");
     if (file == NULL) {
         printf("There is no suitable file!\n");
-        //return false;
     }
 
     while (true) {
@@ -693,7 +686,6 @@ Mesh loadOBJ(const char* path)
         if (strcmp(lineHeader, "v") == 0) {
 
             fscanf(file, "%f %f %f\n", &v.pos.x, &v.pos.y, &v.pos.z);
-            //out_vertices.push_back(v);
             addVertex(mesh, v);
         }
         else if (strcmp(lineHeader, "f") == 0) {
@@ -704,18 +696,52 @@ Mesh loadOBJ(const char* path)
                 printf("File can't be read by our simple parser : ( Try exporting with other options\n");
                 //return false;
             }
-            mesh.vertexIndices.push_back(vertexIndex[0]);
-            mesh.vertexIndices.push_back(vertexIndex[1]);
-            mesh.vertexIndices.push_back(vertexIndex[2]);
+            addIndex(mesh, vertexIndex[0]-1);
+            addIndex(mesh, vertexIndex[1]-1);
+            addIndex(mesh, vertexIndex[2]-1);
 
             // For each vertex of each triangle
         }
     }
-    size_t sizeOfIndicies = mesh.vertexIndices.size();
-    for (unsigned int i = 0; i < sizeOfIndicies; i++) {
-        addIndex(mesh, mesh.vertexIndices[i]);
+    
+    GLushort ia, ib, ic;
+    size_t sizeOfIndicies = mesh.numIndices;
+    std::vector<int> nb_seen;
+    nb_seen.resize(mesh.numVertices, 0);
+    // mesh.normals.resize(mesh.vertexBuffer.size(), glm::vec3(0.0, 0.0, 0.0));
+    for (unsigned int i = 0; i < sizeOfIndicies; i += 3) {
+
+        ia = mesh.indexBuffer[i];
+        ib = mesh.indexBuffer[i + 1];
+        ic = mesh.indexBuffer[i + 2];
+
+        glm::vec3 normal = Normalize(glm::cross(
+            mesh.vertexBuffer[ib].pos - mesh.vertexBuffer[ia].pos,
+            mesh.vertexBuffer[ic].pos - mesh.vertexBuffer[ia].pos ));
+
+        int v[3];
+        v[0] = ia;
+        v[1] = ib;
+        v[2] = ic;
+
+        //Averaging normals
+        for (int j = 0; j < 3; j++){
+            GLushort cur_v = v[j];
+            nb_seen[cur_v]++;
+            if (nb_seen[cur_v] == 1){
+                mesh.vertexBuffer[cur_v].nrm = normal;
+            }
+            else{
+
+                // average
+                mesh.vertexBuffer[cur_v].nrm.x = mesh.vertexBuffer[cur_v].nrm.x * (1.0 - 1.0 / nb_seen[cur_v]) + normal.x * 1.0 / nb_seen[cur_v];
+                mesh.vertexBuffer[cur_v].nrm.y = mesh.vertexBuffer[cur_v].nrm.y * (1.0 - 1.0 / nb_seen[cur_v]) + normal.y * 1.0 / nb_seen[cur_v];
+                mesh.vertexBuffer[cur_v].nrm.z = mesh.vertexBuffer[cur_v].nrm.z * (1.0 - 1.0 / nb_seen[cur_v]) + normal.z * 1.0 / nb_seen[cur_v];
+                mesh.vertexBuffer[cur_v].nrm = glm::normalize(mesh.vertexBuffer[cur_v].nrm);
+            }
+        }
     }
 
-    //glBufferData(GL_ARRAY_BUFFER, out_vertices.size() * sizeof(glm::vec3), &out_vertices[0], GL_STATIC_DRAW);
+
     return mesh;
 }

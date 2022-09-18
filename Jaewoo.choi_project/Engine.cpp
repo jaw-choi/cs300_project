@@ -1,3 +1,11 @@
+/* !
+@file    Engine.cpp
+@author  jaewoo.choi@digipen.edu
+@date    15/09/2022
+
+Note: 
+
+*//*__________________________________________________________________________*/
 #include "Engine.h"
 #include "glhelper.h"
 #include <imgui.h>
@@ -6,7 +14,7 @@
 #include "RendOBJ.h"
 Engine::Engine()
 {
-    cube = new RendOBJ();
+    obj = new RendOBJ();
     if (!GLHelper::init(1600, 1000, "Jaewoo.choi_Project"))
     {
 	std::cout << "Unable to create OpenGL context" << std::endl;
@@ -34,7 +42,7 @@ Engine::~Engine()
 
 void Engine::init()
 {
-    cube->init();
+    obj->init();
 }
 
 void Engine::Update()
@@ -48,15 +56,17 @@ void Engine::Draw()
 {
 
     //tests[current]->Draw();
-    glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+    glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT);
-    //TODO : make helper function with whole imgui
-    ImGui_ImplOpenGL3_NewFrame();
-    ImGui_ImplGlfw_NewFrame();
-    ImGui::NewFrame();
 
-    cube->Draw();
-    ImGui::Begin("Demo");
+    //TODO : make helper function with whole imgui
+    //ImGui_ImplOpenGL3_NewFrame();
+    //ImGui_ImplGlfw_NewFrame();
+    //ImGui::NewFrame();
+
+    obj->Draw();
+
+    //ImGui::Begin("Demo");
     ImGui::Render();
     ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
