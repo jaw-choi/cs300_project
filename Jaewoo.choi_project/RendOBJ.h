@@ -33,10 +33,10 @@ public:
 
     const GLfloat bgColor[4] = { 0.0f, 0.0f, 0.0f, 1.0f };
     //const GLfloat one = 1.0f;
-    Vec4 useNormal = Vec4(1.f, 0.2f, 0.4f, 1.0f);
+    Vec4 useNormal = Vec4(0.9f, 0.9f, 0.9f, 1.0f);
 
 private:
-
+    Camera camera;
     glm::mat4 view;
     glm::mat4 projection;
     glm::vec3 eye;

@@ -17,7 +17,12 @@ public:
     glm::mat4& GetViewMatrix();
     glm::vec3 GetEye();
 
-    glm::mat4  view{ 0 };
+    glm::mat4      view = {
+    1,0,0,0,
+    0,1,0,0,
+    0,0,1,0,
+    0,0,0,1
+    };
     glm::vec3 eye{ 0 }; //camera position
     glm::vec3 cameraTarget{ 0 }; //view target
     glm::vec3 cameraDirection{ 0 }; //view direction

@@ -19,7 +19,6 @@
 #include "glhelper.h"
 /*  Function prototype(s) */
 
-
 Mesh CreatePlane(int stacks, int slices)
 {
     Mesh mesh;
@@ -384,6 +383,9 @@ Mesh CreateCone(int stacks, int slices)
     return  mesh;
 }
 
+
+
+
 void BuildIndexBuffer(int stacks, int slices, Mesh& mesh)
 {
     //@todo: IMPLEMENT ME
@@ -448,6 +450,7 @@ void addIndex(Mesh& mesh, int index)
         ++mesh.numTris;
 }
 
+
 void Mesh::setup_shdrpgm(std::string shader)
 {
     std::string vert = "../shaders/";
@@ -466,6 +469,8 @@ void Mesh::setup_shdrpgm(std::string shader)
         std::exit(EXIT_FAILURE);
     }
 }
+
+
 
 GLuint Mesh::LoadShaders(const char* vertex_file_path, const char* fragment_file_path)
 {
@@ -582,8 +587,11 @@ void Mesh::setup_mesh()
     LightLoc = glGetUniformLocation(renderProg.GetHandle(), "lightPos");
     ViewPosLoc = glGetUniformLocation(renderProg.GetHandle(), "viewPos");
 
-    SendVertexData();
-    
+
+        SendVertexData();
+
+        //SendVertexDataForLine();
+
     /*  Bind framebuffer to 0 to render to the screen (by default already 0) */
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
@@ -609,11 +617,13 @@ void Mesh::draw(glm::vec3 color, glm::mat4 view, glm::mat4 projection, glm::vec3
         0,0,1,0,
         0,0,0,1
     };
+    //TODO
     model = glm::translate(model, position);
     model = glm::rotate(model, rotation.x, glm::vec3(1.0f, 0.0f, 0.0f));
     model = glm::rotate(model, rotation.y, glm::vec3(0.0f, 1.0f, 0.0f));
     model = glm::rotate(model, rotation.z, glm::vec3(0.0f, 0.0f, 1.0f));
-    model = glm::scale(model, { 11.f,11.f,11.f});
+    //model = glm::rotate(model, (float)glfwGetTime() * glm::radians(45.0f), glm::vec3(0.0f, 0.5f, 0.0f));
+    model = glm::scale(model, scale);
 
 
 
@@ -621,6 +631,7 @@ void Mesh::draw(glm::vec3 color, glm::mat4 view, glm::mat4 projection, glm::vec3
     glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
     glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view));
     glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, glm::value_ptr(projection));
+
     glUniform3fv(LightLoc, 1, ValuePtr(light_pos));
     glUniform3fv(ViewPosLoc, 1, ValuePtr(view_pos));
 
@@ -629,12 +640,43 @@ void Mesh::draw(glm::vec3 color, glm::mat4 view, glm::mat4 projection, glm::vec3
 
 }
 
+//void Mesh::drawLine(glm::vec3 color, glm::mat4 view, glm::mat4 projection, glm::vec3 light_pos, glm::vec3 view_pos)
+//{
+//    glm::mat4 model = {
+//        1,0,0,0,
+//        0,1,0,0,
+//        0,0,1,0,
+//        0,0,0,1
+//    };
+//    model = glm::translate(model, position);
+//    model = glm::rotate(model, rotation.x, glm::vec3(1.0f, 0.0f, 0.0f));
+//    model = glm::rotate(model, rotation.y, glm::vec3(0.0f, 1.0f, 0.0f));
+//    model = glm::rotate(model, rotation.z, glm::vec3(0.0f, 0.0f, 1.0f));
+//    //model = glm::rotate(model, (float)glfwGetTime() * glm::radians(50.0f), glm::vec3(0.0f, 0.5f, 0.0f));
+//    model = glm::scale(model,  scale );
+//
+//
+//
+//    glUniform4fv(colorLoc, 1, ValuePtr(color));
+//    glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
+//    glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view));
+//    glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, glm::value_ptr(projection));
+//    glUniform3fv(LightLoc, 1, ValuePtr(light_pos));
+//    glUniform3fv(ViewPosLoc, 1, ValuePtr(view_pos));
+//
+//    glBindVertexArray(VAO); 
+//    glDrawElements(GL_LINES, numIndicesLine, GL_UNSIGNED_INT, nullptr);
+//
+//}
+
 void Mesh::init(const char* vertex_file_path, const char* fragment_file_path, glm::vec3 Pos, glm::vec3 Scale, glm::vec3 Rotate)
 {
     position = Pos;
     scale = Scale;
     rotation = Rotate;
+
     LoadShaders(vertex_file_path, fragment_file_path);
+    
     setup_mesh();
 }
 
@@ -662,12 +704,47 @@ void Mesh::SendVertexData()
     }
 }
 
+//void Mesh::SendVertexDataForLine()
+//{
+//    glGenVertexArrays(1, &VAO);
+//    glBindVertexArray(VAO);
+//
+//    glGenBuffers(1, &VBO);
+//    glBindBuffer(GL_ARRAY_BUFFER, VBO);
+//    /*  Copy vertex attributes to GPU */
+//    glBufferData(GL_ARRAY_BUFFER, static_cast<GLsizeiptr>(numVerticesLine) * static_cast <GLsizeiptr>(vertexSize), &vertexBufferForLines[0], GL_DYNAMIC_DRAW);
+//
+//    glGenBuffers(1, &IBO);
+//    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, IBO);
+//    /*  Copy vertex indices to GPU */
+//    glBufferData(GL_ELEMENT_ARRAY_BUFFER, static_cast<GLsizeiptr>(numIndicesLine) * static_cast <GLsizeiptr>(indexSize), &indexBufferForLines[0], GL_DYNAMIC_DRAW);
+//
+//
+//    /*  Send vertex attributes to shaders */
+//    for (int i = 0; i < numAttribs; ++i)
+//    {
+//        glEnableVertexAttribArray(vLayout[i].location);
+//        glVertexAttribPointer(vLayout[i].location, vLayout[i].size, vLayout[i].type, vLayout[i].normalized, vertexSize, (void*)(uintptr_t)vLayout[i].offset);
+//    }
+//}
 
-Mesh loadOBJ(const char* path)
+
+Mesh LoadOBJ(const char* path)
 {
     Mesh mesh;
+    MinMax m;
+    LengthMinMax lm;
+
+
+    ReadOBJ(path, mesh, m, lm);
+
+    return CalculateMesh(mesh, m, lm);
+}
+
+void ReadOBJ(const char* path,Mesh& mesh, MinMax& m, LengthMinMax& lm)
+{
     Vertex v;
-    
+
     FILE* file = fopen(path, "r");
     if (file == NULL) {
         printf("There is no suitable file!\n");
@@ -687,6 +764,9 @@ Mesh loadOBJ(const char* path)
 
             fscanf(file, "%f %f %f\n", &v.pos.x, &v.pos.y, &v.pos.z);
             addVertex(mesh, v);
+            CalculateMinMax(v, m);
+
+
         }
         else if (strcmp(lineHeader, "f") == 0) {
             std::string vertex1, vertex2, vertex3;
@@ -703,12 +783,38 @@ Mesh loadOBJ(const char* path)
             // For each vertex of each triangle
         }
     }
-    
+    lm.lenX = m.max.x - m.min.x;
+    lm.lenY = m.max.y - m.min.y;
+    lm.lenZ = m.max.z - m.min.z;
+}
+
+Mesh CalculateMesh(Mesh& mesh, MinMax& m, LengthMinMax& lm)
+{
     GLushort ia, ib, ic;
     size_t sizeOfIndicies = mesh.numIndices;
     std::vector<int> nb_seen;
     nb_seen.resize(mesh.numVertices, 0);
-    // mesh.normals.resize(mesh.vertexBuffer.size(), glm::vec3(0.0, 0.0, 0.0));
+    std::vector<std::vector<glm::vec3>> prevNormal;
+    int doubleNumVertices = mesh.numVertices * 2;
+    int NumVertice = mesh.numVertices;
+    mesh.faceBuffer.resize(mesh.numTris, { 0,0,0 });
+    prevNormal.resize(mesh.numVertices, std::vector<glm::vec3>(0));
+
+    mesh.vertexBufferForLines.resize(mesh.numVertices * 2, { 0,0,0 });
+    mesh.indexBufferForLines.resize(mesh.numVertices * 2, 0);
+    
+    //Move to origin
+    glm::vec3 origin = { 0,0,0 };
+    MoveToOrigin(mesh, origin, m);
+
+    for (int i = 0; i < mesh.numVertices; i++)
+    {
+
+        mesh.vertexBuffer[i].pos.x = 2 * ((mesh.vertexBuffer[i].pos.x- m.min.x) / lm.lenX) -1.f;
+        mesh.vertexBuffer[i].pos.y = 2 * ((mesh.vertexBuffer[i].pos.y- m.min.y) / lm.lenY) -1.f;
+        mesh.vertexBuffer[i].pos.z = 2 * ((mesh.vertexBuffer[i].pos.z- m.min.z) / lm.lenZ) -1.f;
+    }
+
     for (unsigned int i = 0; i < sizeOfIndicies; i += 3) {
 
         ia = mesh.indexBuffer[i];
@@ -717,31 +823,94 @@ Mesh loadOBJ(const char* path)
 
         glm::vec3 normal = Normalize(glm::cross(
             mesh.vertexBuffer[ib].pos - mesh.vertexBuffer[ia].pos,
-            mesh.vertexBuffer[ic].pos - mesh.vertexBuffer[ia].pos ));
+            mesh.vertexBuffer[ic].pos - mesh.vertexBuffer[ia].pos));
+
+        mesh.faceBuffer[i / 3] = normal;
 
         int v[3];
         v[0] = ia;
         v[1] = ib;
         v[2] = ic;
-
         //Averaging normals
-        for (int j = 0; j < 3; j++){
+        for (int j = 0; j < 3; j++) {
+            bool IgnoreParrel = false;
             GLushort cur_v = v[j];
             nb_seen[cur_v]++;
-            if (nb_seen[cur_v] == 1){
+            if (nb_seen[cur_v] == 1)
+            {
                 mesh.vertexBuffer[cur_v].nrm = normal;
+                prevNormal[cur_v].push_back(normal);
             }
-            else{
-
+            else
+            {
+                for (int i = 0; i < prevNormal[cur_v].size(); i++)
+                {
+                    if (prevNormal[cur_v][i] == normal)
+                        IgnoreParrel = true;
+                }
                 // average
-                mesh.vertexBuffer[cur_v].nrm.x = mesh.vertexBuffer[cur_v].nrm.x * (1.0 - 1.0 / nb_seen[cur_v]) + normal.x * 1.0 / nb_seen[cur_v];
-                mesh.vertexBuffer[cur_v].nrm.y = mesh.vertexBuffer[cur_v].nrm.y * (1.0 - 1.0 / nb_seen[cur_v]) + normal.y * 1.0 / nb_seen[cur_v];
-                mesh.vertexBuffer[cur_v].nrm.z = mesh.vertexBuffer[cur_v].nrm.z * (1.0 - 1.0 / nb_seen[cur_v]) + normal.z * 1.0 / nb_seen[cur_v];
-                mesh.vertexBuffer[cur_v].nrm = glm::normalize(mesh.vertexBuffer[cur_v].nrm);
+                if (IgnoreParrel != true)
+                {
+                    mesh.vertexBuffer[cur_v].nrm.x = mesh.vertexBuffer[cur_v].nrm.x * (1.0 - 1.0 / nb_seen[cur_v]) + normal.x * 1.0 / nb_seen[cur_v];
+                    mesh.vertexBuffer[cur_v].nrm.y = mesh.vertexBuffer[cur_v].nrm.y * (1.0 - 1.0 / nb_seen[cur_v]) + normal.y * 1.0 / nb_seen[cur_v];
+                    mesh.vertexBuffer[cur_v].nrm.z = mesh.vertexBuffer[cur_v].nrm.z * (1.0 - 1.0 / nb_seen[cur_v]) + normal.z * 1.0 / nb_seen[cur_v];
+                    mesh.vertexBuffer[cur_v].nrm = glm::normalize(mesh.vertexBuffer[cur_v].nrm);
+                }
             }
         }
     }
 
 
+    int j = 0;
+    for (int i = 0; i < doubleNumVertices; i+=2)
+    {
+        mesh.vertexBufferForLines[i] = mesh.vertexBuffer[j].pos;
+        mesh.vertexBufferForLines[i+1] = mesh.vertexBuffer[j].pos + mesh.vertexBuffer[j].nrm;
+
+        mesh.indexBufferForLines[i] = i;
+        mesh.indexBufferForLines[i + 1] = i + 1;
+
+        j++;
+    }
+
     return mesh;
+}
+
+
+void CalculateMinMax(Vertex v, MinMax& m)
+{
+    if (v.pos.x < m.min.x)
+        m.min.x = v.pos.x;
+    if (v.pos.y < m.min.y)
+        m.min.y = v.pos.y;
+    if (v.pos.z < m.min.z)
+        m.min.z = v.pos.z;
+    if (v.pos.x > m.max.x)
+        m.max.x = v.pos.x;
+    if (v.pos.y > m.max.y)
+        m.max.y = v.pos.y;
+    if (v.pos.z > m.max.z)
+        m.max.z = v.pos.z;
+
+}
+
+void MoveToOrigin(Mesh& mesh, glm::vec3& origin, MinMax& m)
+{
+    for (int i = 0; i < mesh.numVertices; i++)
+    {
+        origin.x += mesh.vertexBuffer[i].pos.x;
+        origin.y += mesh.vertexBuffer[i].pos.y;
+        origin.z += mesh.vertexBuffer[i].pos.z;
+    }
+    origin = origin / static_cast<float>(mesh.numVertices);
+
+    for (int i = 0; i < mesh.numVertices; i++)
+    {
+        mesh.vertexBuffer[i].pos.x -= origin.x;
+        mesh.vertexBuffer[i].pos.y -= origin.y;
+        mesh.vertexBuffer[i].pos.z -= origin.z;
+    }
+
+    m.min -= origin;
+    m.max -= origin;
 }

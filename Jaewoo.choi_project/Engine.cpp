@@ -48,6 +48,7 @@ void Engine::init()
 void Engine::Update()
 {
     glfwPollEvents();
+    obj->Update(glfwGetTime());
     //double delta_time = GLHelper::update_time(1.0);
     //tests[current]->Update(static_cast<float>(delta_time));
 }
