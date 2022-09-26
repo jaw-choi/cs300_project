@@ -28,6 +28,7 @@ public:
     glm::vec3 cameraDirection{ 0 }; //view direction
     glm::vec3 cameraUp{ 0 };
     glm::vec3 cameraRight{ 0 };
+    glm::vec3 cameraFront{ 0 };
     glm::vec2 direction{ 0 };
     float pitch{ 0 };
     float yaw{ 0 };

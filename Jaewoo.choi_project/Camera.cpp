@@ -8,10 +8,12 @@
 Camera::Camera(glm::vec3 eye) :eye(eye), pitch(0), yaw(-90.0f), angle(0)
 {
     cameraTarget = glm::vec3(0.0f, 0.0f, 0.0f);
-    cameraDirection = glm::vec3(0.0f, 0.0f, -1.f);
+    cameraDirection = glm::vec3(eye - cameraTarget);
 
     cameraRight = glm::normalize(glm::cross(glm::vec3(0.0f, 1.0f, 0.0f), cameraDirection));
+    cameraFront = glm::vec3(0.0f, 0.0f, -1.0f);
     cameraUp = glm::cross(cameraDirection, cameraRight);
+    view = glm::translate(view, eye);
 }
 Camera::Camera(glm::vec3 eye, glm::vec3 direction) :eye(eye), cameraDirection(direction), pitch(0), yaw(-90.0f), angle(0)
 {
@@ -21,34 +23,34 @@ Camera::Camera(glm::vec3 eye, glm::vec3 direction) :eye(eye), cameraDirection(di
 }
 void Camera::Update(float dt)
 {
-    float speed = 10.f;
+    float speed = 0.001f;
 
     if (glfwGetKey(GLHelper::ptr_window, GLFW_KEY_UP))
     {
-        eye += speed * dt * cameraDirection;
+        eye.y += speed * dt;
     }
     if (glfwGetKey(GLHelper::ptr_window, GLFW_KEY_DOWN))
     {
-        eye -= speed * dt * cameraDirection;
+        eye.y -= speed * dt;
     }
     if (glfwGetKey(GLHelper::ptr_window, GLFW_KEY_W))
     {
-        eye += speed * dt * cameraUp;
+        eye += speed * dt * cameraFront;
     }
     if (glfwGetKey(GLHelper::ptr_window, GLFW_KEY_S))
     {
-        eye -= speed * dt * cameraUp;
+        eye -= speed * dt * cameraFront;
     }
     if (glfwGetKey(GLHelper::ptr_window, GLFW_KEY_A))
     {
-        eye -= glm::normalize(glm::cross(cameraDirection, cameraUp)) * speed * dt;
+        eye -= glm::normalize(glm::cross(cameraFront, cameraUp)) * speed * dt;
     }
     if (glfwGetKey(GLHelper::ptr_window, GLFW_KEY_D))
     {
-        eye += glm::normalize(glm::cross(cameraDirection, cameraUp)) * speed * dt;
+        eye += glm::normalize(glm::cross(cameraFront, cameraUp)) * speed * dt;
     }
-
-    view = glm::lookAt(eye, eye + mouse_update(dt), cameraUp);
+    //view = glm::translate(view, eye);
+    view = glm::lookAt(eye, eye + cameraFront, cameraUp);
 }
 glm::vec3 Camera::mouse_update(float)
 {
@@ -85,14 +87,14 @@ glm::vec3 Camera::mouse_update(float)
         mouse_start = false;
     }
 
-    glm::vec3 front = cameraDirection;
-    front.x += cos(glm::radians(yaw)) * cos(glm::radians(pitch));
-    front.y += sin(glm::radians(pitch));
-    front.z += sin(glm::radians(yaw)) * cos(glm::radians(pitch));
-    cameraDirection = glm::normalize(front);
-    cameraRight = glm::normalize(glm::cross(front, cameraUp));  // normalize the vectors, because their length gets closer to 0 the more you look up or down which results in slower movement.
-    cameraUp = glm::normalize(glm::cross(cameraRight, front));
-    return (front);
+    glm::vec3 direction= cameraDirection;
+    direction.x += cos(glm::radians(yaw)) * cos(glm::radians(pitch));
+    direction.y += sin(glm::radians(pitch));
+    direction.z += sin(glm::radians(yaw)) * cos(glm::radians(pitch));
+    cameraFront = glm::normalize(direction);
+    cameraRight = glm::normalize(glm::cross(direction, cameraUp));  // normalize the vectors, because their length gets closer to 0 the more you look up or down which results in slower movement.
+    cameraUp = glm::normalize(glm::cross(cameraRight, direction));
+    return (direction);
 }
 glm::mat4& Camera::GetViewMatrix()
 {

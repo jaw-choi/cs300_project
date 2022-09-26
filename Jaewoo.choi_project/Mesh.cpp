@@ -383,6 +383,26 @@ Mesh CreateCone(int stacks, int slices)
     return  mesh;
 }
 
+Mesh CreateOrbit(int num)
+{
+    Mesh mesh;
+    Vertex v;
+    int radius = 2.f;
+    float theta = TWO_PI / (float)num;
+    for (int i = 0; i <= num; i++)
+    {
+        v.pos = { radius * cos(theta*i),0,radius * sin(theta*i) };
+        mesh.vertexBufferForVertexNrm.push_back(v);
+        if (i != 0 && i != num) {
+            mesh.vertexBufferForVertexNrm.push_back(v);
+            ++mesh.numVerticesLine;
+        }
+        ++mesh.numVerticesLine;
+    }
+
+    return mesh;
+}
+
 
 
 
@@ -451,6 +471,7 @@ void addIndex(Mesh& mesh, int index)
 }
 
 
+
 void Mesh::setup_shdrpgm(std::string shader)
 {
     std::string vert = "../shaders/";
@@ -470,7 +491,101 @@ void Mesh::setup_shdrpgm(std::string shader)
     }
 }
 
+void Mesh::init(const char* vertex_file_path, const char* fragment_file_path, glm::vec3 Pos, glm::vec3 Scale, glm::vec3 Rotate)
+{
+    camera = { { 0.f, 0.f, 10.0f } };
+    position = Pos;
+    scale = Scale;
+    rotation = Rotate;
 
+    LoadShaders(vertex_file_path, fragment_file_path);
+
+    glUseProgram(renderProg.GetHandle());
+
+    /*  Obtain the locations of the variables in the shaders with the given names */
+    modelLoc = glGetUniformLocation(renderProg.GetHandle(), "model");
+    viewLoc = glGetUniformLocation(renderProg.GetHandle(), "view");
+    colorLoc = glGetUniformLocation(renderProg.GetHandle(), "color");
+    projectionLoc = glGetUniformLocation(renderProg.GetHandle(), "projection");
+    LightLoc = glGetUniformLocation(renderProg.GetHandle(), "lightPos");
+    ViewPosLoc = glGetUniformLocation(renderProg.GetHandle(), "viewPos");
+
+    SendVertexData();
+
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+    /*  Initially drawing using filled mode */
+
+    /*  Hidden surface removal */
+    glEnable(GL_DEPTH_TEST);
+    glDepthFunc(GL_LESS);
+
+}
+
+void Mesh::initLine(const char* vertex_file_path, const char* fragment_file_path, glm::vec3 Pos, glm::vec3 Scale, glm::vec3 Rotate)
+{
+    camera = { { 0.f, 0.f, 10.0f } };
+    position = Pos;
+    scale = Scale;
+    rotation = Rotate;
+
+    LoadShaders(vertex_file_path, fragment_file_path);
+
+    glUseProgram(renderProg.GetHandle());
+
+    /*  Obtain the locations of the variables in the shaders with the given names */
+    modelLoc = glGetUniformLocation(renderProg.GetHandle(), "model");
+    viewLoc = glGetUniformLocation(renderProg.GetHandle(), "view");
+    colorLoc = glGetUniformLocation(renderProg.GetHandle(), "color");
+    projectionLoc = glGetUniformLocation(renderProg.GetHandle(), "projection");
+    LightLoc = glGetUniformLocation(renderProg.GetHandle(), "lightPos");
+    ViewPosLoc = glGetUniformLocation(renderProg.GetHandle(), "viewPos");
+
+    SendVertexDataForLine();
+
+    /*  Bind framebuffer to 0 to render to the screen (by default already 0) */
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+    /*  Initially drawing using filled mode */
+
+    /*  Hidden surface removal */
+    glEnable(GL_DEPTH_TEST);
+    glDepthFunc(GL_LESS);
+
+}
+
+void Mesh::initFace(const char* vertex_file_path, const char* fragment_file_path, glm::vec3 Pos, glm::vec3 Scale, glm::vec3 Rotate)
+{
+    camera = { { 0.f, 0.f, 10.0f } };
+    position = Pos;
+    scale = Scale;
+    rotation = Rotate;
+
+    LoadShaders(vertex_file_path, fragment_file_path);
+
+    glUseProgram(renderProg.GetHandle());
+
+    /*  Obtain the locations of the variables in the shaders with the given names */
+    modelLoc = glGetUniformLocation(renderProg.GetHandle(), "model");
+    viewLoc = glGetUniformLocation(renderProg.GetHandle(), "view");
+    colorLoc = glGetUniformLocation(renderProg.GetHandle(), "color");
+    projectionLoc = glGetUniformLocation(renderProg.GetHandle(), "projection");
+    LightLoc = glGetUniformLocation(renderProg.GetHandle(), "lightPos");
+    ViewPosLoc = glGetUniformLocation(renderProg.GetHandle(), "viewPos");
+
+    SendVertexDataForFaceLine();
+
+
+    /*  Bind framebuffer to 0 to render to the screen (by default already 0) */
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+    /*  Initially drawing using filled mode */
+
+    /*  Hidden surface removal */
+    glEnable(GL_DEPTH_TEST);
+    glDepthFunc(GL_LESS);
+
+}
 
 GLuint Mesh::LoadShaders(const char* vertex_file_path, const char* fragment_file_path)
 {
@@ -575,42 +690,11 @@ GLuint Mesh::LoadShaders(const char* vertex_file_path, const char* fragment_file
     return ProgramID;
 }
 
-void Mesh::setup_mesh()
-{
-    glUseProgram(renderProg.GetHandle());
-
-    /*  Obtain the locations of the variables in the shaders with the given names */
-    modelLoc = glGetUniformLocation(renderProg.GetHandle(), "model");
-    viewLoc = glGetUniformLocation(renderProg.GetHandle(), "view");
-    colorLoc = glGetUniformLocation(renderProg.GetHandle(), "color");
-    projectionLoc = glGetUniformLocation(renderProg.GetHandle(), "projection");
-    LightLoc = glGetUniformLocation(renderProg.GetHandle(), "lightPos");
-    ViewPosLoc = glGetUniformLocation(renderProg.GetHandle(), "viewPos");
-
-
-        SendVertexData();
-
-        //SendVertexDataForLine();
-
-    /*  Bind framebuffer to 0 to render to the screen (by default already 0) */
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
-
-    /*  Initially drawing using filled mode */
-
-    /*  Hidden surface removal */
-    glEnable(GL_DEPTH_TEST);
-    glDepthFunc(GL_LESS);
-
-    // glEnable(GL_CULL_FACE);     /*  For efficiency, not drawing back-face */
-}
-
-void Mesh::compute_matrix([[maybe_unused]] float delta_time)
-{
-
-}
 
 void Mesh::draw(glm::vec3 color, glm::mat4 view, glm::mat4 projection, glm::vec3 light_pos, glm::vec3 view_pos)
 {
+    glUseProgram(renderProg.GetHandle());
+
     glm::mat4 model = {
         1,0,0,0,
         0,1,0,0,
@@ -637,48 +721,77 @@ void Mesh::draw(glm::vec3 color, glm::mat4 view, glm::mat4 projection, glm::vec3
 
     glBindVertexArray(VAO);
     glDrawElements(GL_TRIANGLES, numIndices, GL_UNSIGNED_INT, nullptr);
+    glBindVertexArray(0);
 
 }
 
-//void Mesh::drawLine(glm::vec3 color, glm::mat4 view, glm::mat4 projection, glm::vec3 light_pos, glm::vec3 view_pos)
-//{
-//    glm::mat4 model = {
-//        1,0,0,0,
-//        0,1,0,0,
-//        0,0,1,0,
-//        0,0,0,1
-//    };
-//    model = glm::translate(model, position);
-//    model = glm::rotate(model, rotation.x, glm::vec3(1.0f, 0.0f, 0.0f));
-//    model = glm::rotate(model, rotation.y, glm::vec3(0.0f, 1.0f, 0.0f));
-//    model = glm::rotate(model, rotation.z, glm::vec3(0.0f, 0.0f, 1.0f));
-//    //model = glm::rotate(model, (float)glfwGetTime() * glm::radians(50.0f), glm::vec3(0.0f, 0.5f, 0.0f));
-//    model = glm::scale(model,  scale );
-//
-//
-//
-//    glUniform4fv(colorLoc, 1, ValuePtr(color));
-//    glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
-//    glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view));
-//    glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, glm::value_ptr(projection));
-//    glUniform3fv(LightLoc, 1, ValuePtr(light_pos));
-//    glUniform3fv(ViewPosLoc, 1, ValuePtr(view_pos));
-//
-//    glBindVertexArray(VAO); 
-//    glDrawElements(GL_LINES, numIndicesLine, GL_UNSIGNED_INT, nullptr);
-//
-//}
-
-void Mesh::init(const char* vertex_file_path, const char* fragment_file_path, glm::vec3 Pos, glm::vec3 Scale, glm::vec3 Rotate)
+void Mesh::drawLine(glm::vec3 color, glm::mat4 view, glm::mat4 projection, glm::vec3 light_pos, glm::vec3 view_pos)
 {
-    position = Pos;
-    scale = Scale;
-    rotation = Rotate;
+    glUseProgram(renderProg.GetHandle());
+    glm::mat4 model = {
+        1,0,0,0,
+        0,1,0,0,
+        0,0,1,0,
+        0,0,0,1
+    };
+    model = glm::translate(model, position);
+    model = glm::rotate(model, rotation.x, glm::vec3(1.0f, 0.0f, 0.0f));
+    model = glm::rotate(model, rotation.y, glm::vec3(0.0f, 1.0f, 0.0f));
+    model = glm::rotate(model, rotation.z, glm::vec3(0.0f, 0.0f, 1.0f));
+    model = glm::scale(model,  scale );
+    //model = glm::rotate(model, (float)glfwGetTime() * glm::radians(50.0f), glm::vec3(0.0f, 0.5f, 0.0f));
 
-    LoadShaders(vertex_file_path, fragment_file_path);
-    
-    setup_mesh();
+
+
+    glBindVertexArray(VAOL); 
+    glUniform4fv(colorLoc, 1, ValuePtr(color));
+    glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
+    glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view));
+    glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, glm::value_ptr(projection));
+    glUniform3fv(LightLoc, 1, ValuePtr(light_pos));
+    glUniform3fv(ViewPosLoc, 1, ValuePtr(view_pos));
+
+    //glDrawElements(GL_LINES, numIndicesLine, GL_UNSIGNED_INT, nullptr);
+    //glLineWidth(1.f);
+    //glVertexAttrib3f(0.99f, 0.99f, 0.99f, 1.f); // blue color for lines
+    glDrawArrays(GL_LINES, 0, numVerticesLine);
+    glBindVertexArray(0);
+
 }
+
+void Mesh::drawFaceLine(glm::vec3 color, glm::mat4 view, glm::mat4 projection, glm::vec3 light_pos, glm::vec3 view_pos)
+{
+    glUseProgram(renderProg.GetHandle());
+    glm::mat4 model = {
+        1,0,0,0,
+        0,1,0,0,
+        0,0,1,0,
+        0,0,0,1
+    };
+    model = glm::translate(model, position);
+    model = glm::rotate(model, rotation.x, glm::vec3(1.0f, 0.0f, 0.0f));
+    model = glm::rotate(model, rotation.y, glm::vec3(0.0f, 1.0f, 0.0f));
+    model = glm::rotate(model, rotation.z, glm::vec3(0.0f, 0.0f, 1.0f));
+    model = glm::scale(model, scale);
+    //model = glm::rotate(model, (float)glfwGetTime() * glm::radians(50.0f), glm::vec3(0.0f, 0.5f, 0.0f));
+
+
+
+    glBindVertexArray(VAOFL);
+    glUniform4fv(colorLoc, 1, ValuePtr(color));
+    glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
+    glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view));
+    glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, glm::value_ptr(projection));
+    glUniform3fv(LightLoc, 1, ValuePtr(light_pos));
+    glUniform3fv(ViewPosLoc, 1, ValuePtr(view_pos));
+
+
+    glDrawArrays(GL_LINES, 0, numVerticesFaceLine);
+    glBindVertexArray(0);
+
+}
+
+
 
 void Mesh::SendVertexData()
 {
@@ -702,31 +815,53 @@ void Mesh::SendVertexData()
         glEnableVertexAttribArray(vLayout[i].location);
         glVertexAttribPointer(vLayout[i].location, vLayout[i].size, vLayout[i].type, vLayout[i].normalized, vertexSize, (void*)(uintptr_t)vLayout[i].offset);
     }
+    glBindVertexArray(0);
+    glBindBuffer(GL_ARRAY_BUFFER,0);
+   // glBindBuffer(GL_ELEMENT_ARRAY_BUFFER,0);
 }
 
-//void Mesh::SendVertexDataForLine()
-//{
-//    glGenVertexArrays(1, &VAO);
-//    glBindVertexArray(VAO);
-//
-//    glGenBuffers(1, &VBO);
-//    glBindBuffer(GL_ARRAY_BUFFER, VBO);
-//    /*  Copy vertex attributes to GPU */
-//    glBufferData(GL_ARRAY_BUFFER, static_cast<GLsizeiptr>(numVerticesLine) * static_cast <GLsizeiptr>(vertexSize), &vertexBufferForLines[0], GL_DYNAMIC_DRAW);
-//
-//    glGenBuffers(1, &IBO);
-//    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, IBO);
-//    /*  Copy vertex indices to GPU */
-//    glBufferData(GL_ELEMENT_ARRAY_BUFFER, static_cast<GLsizeiptr>(numIndicesLine) * static_cast <GLsizeiptr>(indexSize), &indexBufferForLines[0], GL_DYNAMIC_DRAW);
-//
-//
-//    /*  Send vertex attributes to shaders */
-//    for (int i = 0; i < numAttribs; ++i)
-//    {
-//        glEnableVertexAttribArray(vLayout[i].location);
-//        glVertexAttribPointer(vLayout[i].location, vLayout[i].size, vLayout[i].type, vLayout[i].normalized, vertexSize, (void*)(uintptr_t)vLayout[i].offset);
-//    }
-//}
+void Mesh::SendVertexDataForLine()
+{
+
+    glGenVertexArrays(1, &VAOL);
+    glBindVertexArray(VAOL);
+
+    glGenBuffers(1, &VBOL);
+    glBindBuffer(GL_ARRAY_BUFFER, VBOL);
+    /*  Copy vertex attributes to GPU */
+    glBufferData(GL_ARRAY_BUFFER, static_cast<GLsizeiptr>(numVerticesLine) * static_cast <GLsizeiptr>(vertexSize), &vertexBufferForVertexNrm[0], GL_DYNAMIC_DRAW);
+
+
+    /*  Send vertex attributes to shaders */
+    for (int i = 0; i < numAttribs; ++i)
+    {
+        glEnableVertexAttribArray(vLayout[i].location);
+        glVertexAttribPointer(vLayout[i].location, vLayout[i].size, vLayout[i].type, vLayout[i].normalized, vertexSize, (void*)(uintptr_t)vLayout[i].offset);
+    }
+    glBindVertexArray(0);
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+}
+
+void Mesh::SendVertexDataForFaceLine()
+{
+
+    glGenVertexArrays(1, &VAOFL);
+    glBindVertexArray(VAOFL);
+
+    glGenBuffers(1, &VBOFL);
+    glBindBuffer(GL_ARRAY_BUFFER, VBOFL);
+    /*  Copy vertex attributes to GPU */
+    glBufferData(GL_ARRAY_BUFFER, static_cast<GLsizeiptr>(numVerticesFaceLine) * static_cast <GLsizeiptr>(vertexSize), &vertexBufferForFaceNrm[0], GL_DYNAMIC_DRAW);
+
+
+    /*  Send vertex attributes to shaders */
+    for (int i = 0; i < numAttribs; ++i)
+    {
+        glEnableVertexAttribArray(vLayout[i].location);
+        glVertexAttribPointer(vLayout[i].location, vLayout[i].size, vLayout[i].type, vLayout[i].normalized, vertexSize, (void*)(uintptr_t)vLayout[i].offset);
+    }
+
+}
 
 
 Mesh LoadOBJ(const char* path)
@@ -796,12 +931,14 @@ Mesh CalculateMesh(Mesh& mesh, MinMax& m, LengthMinMax& lm)
     nb_seen.resize(mesh.numVertices, 0);
     std::vector<std::vector<glm::vec3>> prevNormal;
     int doubleNumVertices = mesh.numVertices * 2;
+    int doubleNumFaceVertices = mesh.numTris * 2;
     int NumVertice = mesh.numVertices;
-    mesh.faceBuffer.resize(mesh.numTris, { 0,0,0 });
+    mesh.faceBuffer.resize(mesh.numTris, Vertex());
     prevNormal.resize(mesh.numVertices, std::vector<glm::vec3>(0));
 
-    mesh.vertexBufferForLines.resize(mesh.numVertices * 2, { 0,0,0 });
-    mesh.indexBufferForLines.resize(mesh.numVertices * 2, 0);
+    mesh.vertexBufferForVertexNrm.resize(mesh.numVertices * 2, Vertex());
+    mesh.vertexBufferForFaceNrm.resize(mesh.numTris * 2, Vertex());
+
     
     //Move to origin
     glm::vec3 origin = { 0,0,0 };
@@ -825,14 +962,16 @@ Mesh CalculateMesh(Mesh& mesh, MinMax& m, LengthMinMax& lm)
             mesh.vertexBuffer[ib].pos - mesh.vertexBuffer[ia].pos,
             mesh.vertexBuffer[ic].pos - mesh.vertexBuffer[ia].pos));
 
-        mesh.faceBuffer[i / 3] = normal;
+        mesh.faceBuffer[i / 3].nrm = normal;
+        mesh.faceBuffer[i / 3].pos = (mesh.vertexBuffer[ia].pos + mesh.vertexBuffer[ib].pos + mesh.vertexBuffer[ic].pos)/3.f;
 
         int v[3];
         v[0] = ia;
         v[1] = ib;
         v[2] = ic;
         //Averaging normals
-        for (int j = 0; j < 3; j++) {
+        for (int j = 0; j < 3; j++) 
+        {
             bool IgnoreParrel = false;
             GLushort cur_v = v[j];
             nb_seen[cur_v]++;
@@ -859,16 +998,28 @@ Mesh CalculateMesh(Mesh& mesh, MinMax& m, LengthMinMax& lm)
             }
         }
     }
+    //face normal
+    int k = 0;
+    mesh.numVerticesFaceLine = 0;
+    for (int i = 0; i < doubleNumFaceVertices; i += 2)
+    {
+        mesh.vertexBufferForFaceNrm[i].pos = mesh.faceBuffer[k].pos;
+        mesh.vertexBufferForFaceNrm[i + 1].pos = mesh.faceBuffer[k].pos + (mesh.faceBuffer[k].nrm);
 
+        mesh.numVerticesFaceLine += 2;
 
+        k++;
+    }
+
+    //vertex normal
+    mesh.numVerticesLine = 0;
     int j = 0;
     for (int i = 0; i < doubleNumVertices; i+=2)
     {
-        mesh.vertexBufferForLines[i] = mesh.vertexBuffer[j].pos;
-        mesh.vertexBufferForLines[i+1] = mesh.vertexBuffer[j].pos + mesh.vertexBuffer[j].nrm;
+        mesh.vertexBufferForVertexNrm[i].pos = mesh.vertexBuffer[j].pos;
+        mesh.vertexBufferForVertexNrm[i+1].pos = mesh.vertexBuffer[j].pos + (mesh.vertexBuffer[j].nrm/7.f);
 
-        mesh.indexBufferForLines[i] = i;
-        mesh.indexBufferForLines[i + 1] = i + 1;
+        mesh.numVerticesLine += 2;
 
         j++;
     }

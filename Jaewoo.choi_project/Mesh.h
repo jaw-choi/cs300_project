@@ -15,7 +15,7 @@
 #include <GL/glew.h> 
 #include"math.h"
 #include"glslshader.h"
-
+#include "Camera.h"
 
 
 
@@ -85,18 +85,26 @@ struct Mesh
     /*  Storing the actual vertex/index data */
     VertexBufferType vertexBuffer;
     IndexBufferType indexBuffer;
-    FaceBufferType faceBuffer;
-    FaceBufferType vertexBufferForLines;
-    IndexBufferType indexBufferForLines;
+    VertexBufferType faceBuffer;
+    VertexBufferType vertexBufferForVertexNrm;
+    VertexBufferType vertexBufferForFaceNrm;
+    
 
+    int meshtype = -1;
 
-    int numVertices;
-    int numTris;
-    int numIndices;
-
+    int numVertices=0;
+    int numTris=0;
+    int numIndices=0;
+    int numVerticesLine=0;
+    int numVerticesFaceLine=0;
+    
 
     GLuint VAO;
+    GLuint VAOL;
+    GLuint VAOFL;
     GLuint VBO;
+    GLuint VBOL;
+    GLuint VBOFL;
     GLuint IBO;
     GLSLShader renderProg{ GLSLShader() };
 
@@ -113,13 +121,17 @@ struct Mesh
 
     GLuint LoadShaders(const char* vertex_file_path, const char* fragment_file_path);
     void init(const char* vertex_file_path, const char* fragment_file_path, glm::vec3 Pos = { 0,0,0 }, glm::vec3 Scale = { 1,1,1 }, glm::vec3 Rotate = { 0,0,0 });
+    void initLine(const char* vertex_file_path, const char* fragment_file_path, glm::vec3 Pos = { 0,0,0 }, glm::vec3 Scale = { 1,1,1 }, glm::vec3 Rotate = { 0,0,0 });
+    void initFace(const char* vertex_file_path, const char* fragment_file_path, glm::vec3 Pos = { 0,0,0 }, glm::vec3 Scale = { 1,1,1 }, glm::vec3 Rotate = { 0,0,0 });
     void SendVertexData();
-    //void SendVertexDataForLine();
+    void SendVertexDataForLine();
+    void SendVertexDataForFaceLine();
     void setup_shdrpgm(std::string shader);
-    void setup_mesh();
-    void compute_matrix(float delta_time);
+    //void setup_mesh();
+    //void compute_matrix(float delta_time);
     void draw(glm::vec3 color, glm::mat4 view, glm::mat4 projection, glm::vec3 light_pos, glm::vec3 view_pos);
-    //void drawLine(glm::vec3 color, glm::mat4 view, glm::mat4 projection, glm::vec3 light_pos, glm::vec3 view_pos);
+    void drawLine(glm::vec3 color, glm::mat4 view, glm::mat4 projection, glm::vec3 light_pos, glm::vec3 view_pos);
+    void drawFaceLine(glm::vec3 color, glm::mat4 view, glm::mat4 projection, glm::vec3 light_pos, glm::vec3 view_pos);
     void set_position(glm::vec3 pos)
     {
         position = pos;
@@ -137,7 +149,7 @@ struct Mesh
     int* get_stack_slice() { return stack_slice; }
     int stack_slice[2] = { 0 };
     bool update_flag = true;
-
+    Camera camera;
 };
 
 Mesh LoadOBJ(const char* path);
@@ -149,10 +161,12 @@ Mesh CreateSphere(int stacks, int slices);
 Mesh CreateTorus(int stacks, int slices, float startAngle, float endAngle);
 Mesh CreateCylinder(int stacks, int slices);
 Mesh CreateCone(int stacks, int slices);
+Mesh CreateOrbit(int num);
 
 void BuildIndexBuffer(int stacks, int slices, Mesh& mesh);
 void addVertex(Mesh& mesh, const Vertex& v);
 void addIndex(Mesh& mesh, int index);
+
 void CalculateMinMax(Vertex v, MinMax& m);
 void MoveToOrigin(Mesh& mesh,glm::vec3& origin, MinMax& m);
 /******************************************************************************/
