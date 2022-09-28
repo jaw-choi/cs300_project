@@ -21,6 +21,7 @@
 
 /*  Mesh function(s) */
 enum MeshID { BUNNY, SPHERE, SPHERE4, CUBE2, SPHERE_MODIFIED, NUM_MESHES };
+enum Primitive { TRIANGLE, LINE, FACE, NUM_MESH };
 struct Vertex
 {
     Vertex(glm::vec3 pos, glm::vec3 nrm, glm::vec3 uv) : pos(pos), nrm(nrm), uv(uv) {}
@@ -114,24 +115,25 @@ struct Mesh
     GLint LightLoc = 0;
     GLint colorLoc = 0;
     GLint ViewPosLoc = 0;
+    GLint TriOrLine = 0;
 
     glm::vec3 position{ 0,0,0 };
     glm::vec3 scale = { 1,1,1 };
     glm::vec3 rotation{ 0,0,0 };
 
     GLuint LoadShaders(const char* vertex_file_path, const char* fragment_file_path);
-    void init(const char* vertex_file_path, const char* fragment_file_path, glm::vec3 Pos = { 0,0,0 }, glm::vec3 Scale = { 1,1,1 }, glm::vec3 Rotate = { 0,0,0 });
+    void init(const char* vertex_file_path, const char* fragment_file_path, glm::vec3 Pos = { 0,0,0 }, glm::vec3 Scale = { 1,1,1 }, glm::vec3 Rotate = { 0,0,0 }, bool obj = true);
     void initLine(const char* vertex_file_path, const char* fragment_file_path, glm::vec3 Pos = { 0,0,0 }, glm::vec3 Scale = { 1,1,1 }, glm::vec3 Rotate = { 0,0,0 });
-    void initFace(const char* vertex_file_path, const char* fragment_file_path, glm::vec3 Pos = { 0,0,0 }, glm::vec3 Scale = { 1,1,1 }, glm::vec3 Rotate = { 0,0,0 });
+    
     void SendVertexData();
     void SendVertexDataForLine();
     void SendVertexDataForFaceLine();
     void setup_shdrpgm(std::string shader);
     //void setup_mesh();
     //void compute_matrix(float delta_time);
-    void draw(glm::vec3 color, glm::mat4 view, glm::mat4 projection, glm::vec3 light_pos, glm::vec3 view_pos);
-    void drawLine(glm::vec3 color, glm::mat4 view, glm::mat4 projection, glm::vec3 light_pos, glm::vec3 view_pos);
-    void drawFaceLine(glm::vec3 color, glm::mat4 view, glm::mat4 projection, glm::vec3 light_pos, glm::vec3 view_pos);
+    void draw(glm::vec3 color, glm::mat4 view, glm::mat4 projection, glm::vec3 light_pos, glm::vec3 view_pos, glm::vec2 type_);
+    void drawLine(glm::vec3 color, glm::mat4 view, glm::mat4 projection, glm::vec3 light_pos, glm::vec3 view_pos, glm::vec2 type_);
+    void drawFaceLine(glm::vec3 color, glm::mat4 view, glm::mat4 projection, glm::vec3 light_pos, glm::vec3 view_pos, glm::vec2 type_);
     void set_position(glm::vec3 pos)
     {
         position = pos;

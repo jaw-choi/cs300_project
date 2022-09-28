@@ -13,7 +13,8 @@ Note :
 #pragma once
 
 #include"Mesh.h"
-#include "Camera.h"
+
+
 
 class RendOBJ
 {
@@ -26,8 +27,15 @@ public:
     void OnImGuiRender();
     void UnLoad();
 
-
+    void InitBunny();
+    void InitSphere();
+    void InitOrbit();
+    void Init4Sphere();
+    void Initcube2();
+    void InitSphere_();
+    void InitSphereModified();
     void SetView();
+    void DrawBeforeImGui();
 
     std::vector<Mesh> meshes;
 
@@ -41,8 +49,9 @@ private:
     glm::mat4 projection;
     glm::vec3 eye;
     glm::vec3 light;
-
-    //bool meshSwitch[NUM_MESHES] = { true,true,true,true,true/*,true*/ };
+    bool vertxNrm[5] = { false,false,false,false,false };
+    bool faceNrm[5] = { false,false,false,false,false };
+    bool meshSwitch[5] = { true,false,false,false,false };
     //bool is_switch_pressed(const char* buttonName, bool& buttonType);
     //void onOffSwitch();
 };

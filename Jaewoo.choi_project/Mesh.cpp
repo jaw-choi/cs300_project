@@ -404,8 +404,6 @@ Mesh CreateOrbit(int num)
 }
 
 
-
-
 void BuildIndexBuffer(int stacks, int slices, Mesh& mesh)
 {
     //@todo: IMPLEMENT ME
@@ -491,7 +489,7 @@ void Mesh::setup_shdrpgm(std::string shader)
     }
 }
 
-void Mesh::init(const char* vertex_file_path, const char* fragment_file_path, glm::vec3 Pos, glm::vec3 Scale, glm::vec3 Rotate)
+void Mesh::init(const char* vertex_file_path, const char* fragment_file_path, glm::vec3 Pos, glm::vec3 Scale, glm::vec3 Rotate, bool obj)
 {
     camera = { { 0.f, 0.f, 10.0f } };
     position = Pos;
@@ -509,8 +507,15 @@ void Mesh::init(const char* vertex_file_path, const char* fragment_file_path, gl
     projectionLoc = glGetUniformLocation(renderProg.GetHandle(), "projection");
     LightLoc = glGetUniformLocation(renderProg.GetHandle(), "lightPos");
     ViewPosLoc = glGetUniformLocation(renderProg.GetHandle(), "viewPos");
+    TriOrLine = glGetUniformLocation(renderProg.GetHandle(), "triline");
 
-    SendVertexData();
+
+        SendVertexData();
+        if (obj)
+        {
+            SendVertexDataForLine();
+            SendVertexDataForFaceLine();
+        }
 
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
@@ -554,38 +559,6 @@ void Mesh::initLine(const char* vertex_file_path, const char* fragment_file_path
 
 }
 
-void Mesh::initFace(const char* vertex_file_path, const char* fragment_file_path, glm::vec3 Pos, glm::vec3 Scale, glm::vec3 Rotate)
-{
-    camera = { { 0.f, 0.f, 10.0f } };
-    position = Pos;
-    scale = Scale;
-    rotation = Rotate;
-
-    LoadShaders(vertex_file_path, fragment_file_path);
-
-    glUseProgram(renderProg.GetHandle());
-
-    /*  Obtain the locations of the variables in the shaders with the given names */
-    modelLoc = glGetUniformLocation(renderProg.GetHandle(), "model");
-    viewLoc = glGetUniformLocation(renderProg.GetHandle(), "view");
-    colorLoc = glGetUniformLocation(renderProg.GetHandle(), "color");
-    projectionLoc = glGetUniformLocation(renderProg.GetHandle(), "projection");
-    LightLoc = glGetUniformLocation(renderProg.GetHandle(), "lightPos");
-    ViewPosLoc = glGetUniformLocation(renderProg.GetHandle(), "viewPos");
-
-    SendVertexDataForFaceLine();
-
-
-    /*  Bind framebuffer to 0 to render to the screen (by default already 0) */
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
-
-    /*  Initially drawing using filled mode */
-
-    /*  Hidden surface removal */
-    glEnable(GL_DEPTH_TEST);
-    glDepthFunc(GL_LESS);
-
-}
 
 GLuint Mesh::LoadShaders(const char* vertex_file_path, const char* fragment_file_path)
 {
@@ -691,7 +664,7 @@ GLuint Mesh::LoadShaders(const char* vertex_file_path, const char* fragment_file
 }
 
 
-void Mesh::draw(glm::vec3 color, glm::mat4 view, glm::mat4 projection, glm::vec3 light_pos, glm::vec3 view_pos)
+void Mesh::draw(glm::vec3 color, glm::mat4 view, glm::mat4 projection, glm::vec3 light_pos, glm::vec3 view_pos, glm::vec2 type_)
 {
     glUseProgram(renderProg.GetHandle());
 
@@ -706,11 +679,12 @@ void Mesh::draw(glm::vec3 color, glm::mat4 view, glm::mat4 projection, glm::vec3
     model = glm::rotate(model, rotation.x, glm::vec3(1.0f, 0.0f, 0.0f));
     model = glm::rotate(model, rotation.y, glm::vec3(0.0f, 1.0f, 0.0f));
     model = glm::rotate(model, rotation.z, glm::vec3(0.0f, 0.0f, 1.0f));
-    //model = glm::rotate(model, (float)glfwGetTime() * glm::radians(45.0f), glm::vec3(0.0f, 0.5f, 0.0f));
+    model = glm::rotate(model, (float)glfwGetTime() * glm::radians(45.0f), glm::vec3(0.0f, 0.5f, 0.0f));
     model = glm::scale(model, scale);
+    
 
 
-
+    glBindVertexArray(VAO);
     glUniform4fv(colorLoc, 1, ValuePtr(color));
     glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
     glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view));
@@ -718,14 +692,13 @@ void Mesh::draw(glm::vec3 color, glm::mat4 view, glm::mat4 projection, glm::vec3
 
     glUniform3fv(LightLoc, 1, ValuePtr(light_pos));
     glUniform3fv(ViewPosLoc, 1, ValuePtr(view_pos));
-
-    glBindVertexArray(VAO);
+    glUniform2fv(TriOrLine, 1, ValuePtr(type_));
     glDrawElements(GL_TRIANGLES, numIndices, GL_UNSIGNED_INT, nullptr);
     glBindVertexArray(0);
 
 }
 
-void Mesh::drawLine(glm::vec3 color, glm::mat4 view, glm::mat4 projection, glm::vec3 light_pos, glm::vec3 view_pos)
+void Mesh::drawLine(glm::vec3 color, glm::mat4 view, glm::mat4 projection, glm::vec3 light_pos, glm::vec3 view_pos, glm::vec2 type_)
 {
     glUseProgram(renderProg.GetHandle());
     glm::mat4 model = {
@@ -738,6 +711,7 @@ void Mesh::drawLine(glm::vec3 color, glm::mat4 view, glm::mat4 projection, glm::
     model = glm::rotate(model, rotation.x, glm::vec3(1.0f, 0.0f, 0.0f));
     model = glm::rotate(model, rotation.y, glm::vec3(0.0f, 1.0f, 0.0f));
     model = glm::rotate(model, rotation.z, glm::vec3(0.0f, 0.0f, 1.0f));
+    model = glm::rotate(model, (float)glfwGetTime() * glm::radians(45.0f), glm::vec3(0.0f, 0.5f, 0.0f));
     model = glm::scale(model,  scale );
     //model = glm::rotate(model, (float)glfwGetTime() * glm::radians(50.0f), glm::vec3(0.0f, 0.5f, 0.0f));
 
@@ -750,16 +724,17 @@ void Mesh::drawLine(glm::vec3 color, glm::mat4 view, glm::mat4 projection, glm::
     glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, glm::value_ptr(projection));
     glUniform3fv(LightLoc, 1, ValuePtr(light_pos));
     glUniform3fv(ViewPosLoc, 1, ValuePtr(view_pos));
+    glUniform2fv(TriOrLine, 1, ValuePtr(type_));
 
     //glDrawElements(GL_LINES, numIndicesLine, GL_UNSIGNED_INT, nullptr);
     //glLineWidth(1.f);
-    //glVertexAttrib3f(0.99f, 0.99f, 0.99f, 1.f); // blue color for lines
+    //glVertexAttrib3f(0.1f, 0.1f, 0.99f, 1.f); // blue color for lines
     glDrawArrays(GL_LINES, 0, numVerticesLine);
     glBindVertexArray(0);
 
 }
 
-void Mesh::drawFaceLine(glm::vec3 color, glm::mat4 view, glm::mat4 projection, glm::vec3 light_pos, glm::vec3 view_pos)
+void Mesh::drawFaceLine(glm::vec3 color, glm::mat4 view, glm::mat4 projection, glm::vec3 light_pos, glm::vec3 view_pos, glm::vec2 type_)
 {
     glUseProgram(renderProg.GetHandle());
     glm::mat4 model = {
@@ -772,6 +747,7 @@ void Mesh::drawFaceLine(glm::vec3 color, glm::mat4 view, glm::mat4 projection, g
     model = glm::rotate(model, rotation.x, glm::vec3(1.0f, 0.0f, 0.0f));
     model = glm::rotate(model, rotation.y, glm::vec3(0.0f, 1.0f, 0.0f));
     model = glm::rotate(model, rotation.z, glm::vec3(0.0f, 0.0f, 1.0f));
+    model = glm::rotate(model, (float)glfwGetTime() * glm::radians(45.0f), glm::vec3(0.0f, 0.5f, 0.0f));
     model = glm::scale(model, scale);
     //model = glm::rotate(model, (float)glfwGetTime() * glm::radians(50.0f), glm::vec3(0.0f, 0.5f, 0.0f));
 
@@ -784,6 +760,7 @@ void Mesh::drawFaceLine(glm::vec3 color, glm::mat4 view, glm::mat4 projection, g
     glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, glm::value_ptr(projection));
     glUniform3fv(LightLoc, 1, ValuePtr(light_pos));
     glUniform3fv(ViewPosLoc, 1, ValuePtr(view_pos));
+    glUniform2fv(TriOrLine, 1, ValuePtr(type_));
 
 
     glDrawArrays(GL_LINES, 0, numVerticesFaceLine);
@@ -1004,7 +981,7 @@ Mesh CalculateMesh(Mesh& mesh, MinMax& m, LengthMinMax& lm)
     for (int i = 0; i < doubleNumFaceVertices; i += 2)
     {
         mesh.vertexBufferForFaceNrm[i].pos = mesh.faceBuffer[k].pos;
-        mesh.vertexBufferForFaceNrm[i + 1].pos = mesh.faceBuffer[k].pos + (mesh.faceBuffer[k].nrm);
+        mesh.vertexBufferForFaceNrm[i + 1].pos = mesh.faceBuffer[k].pos + (mesh.faceBuffer[k].nrm/ 7.f);
 
         mesh.numVerticesFaceLine += 2;
 

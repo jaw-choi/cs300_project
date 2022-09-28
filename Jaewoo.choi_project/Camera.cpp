@@ -14,6 +14,7 @@ Camera::Camera(glm::vec3 eye) :eye(eye), pitch(0), yaw(-90.0f), angle(0)
     cameraFront = glm::vec3(0.0f, 0.0f, -1.0f);
     cameraUp = glm::cross(cameraDirection, cameraRight);
     view = glm::translate(view, eye);
+    //view = glm::rotate(view, 3.14159f, glm::vec3(1.0f, 0.0f, 0.0f));
 }
 Camera::Camera(glm::vec3 eye, glm::vec3 direction) :eye(eye), cameraDirection(direction), pitch(0), yaw(-90.0f), angle(0)
 {
@@ -23,7 +24,7 @@ Camera::Camera(glm::vec3 eye, glm::vec3 direction) :eye(eye), cameraDirection(di
 }
 void Camera::Update(float dt)
 {
-    float speed = 0.001f;
+    float speed = 0.0005f;
 
     if (glfwGetKey(GLHelper::ptr_window, GLFW_KEY_UP))
     {
@@ -50,7 +51,9 @@ void Camera::Update(float dt)
         eye += glm::normalize(glm::cross(cameraFront, cameraUp)) * speed * dt;
     }
     //view = glm::translate(view, eye);
+
     view = glm::lookAt(eye, eye + cameraFront, cameraUp);
+
 }
 glm::vec3 Camera::mouse_update(float)
 {
