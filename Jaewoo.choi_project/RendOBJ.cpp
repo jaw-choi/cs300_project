@@ -157,7 +157,8 @@ void RendOBJ::OnImGuiRender()
     ImGui::SliderFloat("z_pos_light", &light.z,-5.f,5.f,"%.2f", 0);
     light.z = light.z;
 
-
+    ImGui::Button("Camera can move with 'w','a','s','d','up','down'");
+    ImGui::Button("Camera can move with 'up','down'");
 }
 
 void RendOBJ::UnLoad()
