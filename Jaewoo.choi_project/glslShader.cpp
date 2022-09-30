@@ -1,5 +1,5 @@
 /* !
-@file    glslshader.h
+@file    glslshader.cpp
 @author  pghali@digipen.edu
 @date    06/11/2016
 
@@ -12,6 +12,19 @@ This file contains definitions of member functions of class GLShader.
 Please see the class declaration for information about these functions.
 
 *//*__________________________________________________________________________*/
+/* Start Header -------------------------------------------------------
+Copyright (C) 2022 DigiPen Institute of Technology.
+Reproduction or disclosure of this file or its contents without the prior written
+consent of DigiPen Institute of Technology is prohibited.
+File Name: glslShader.cpp
+Purpose: <This file contains definitions of member functions of class GLShader.
+Please see the class declaration for information about these functions.>
+Language: <c++>
+Platform: <Visual studio 2019, OpenGL 4.5, Window 64bit>
+Project: <jaewoo.choi_CS300_1>
+Author: <Jaewoo Choi, jaewoo.choi, 55532>
+Creation date: 14/09/2022
+End Header --------------------------------------------------------*/
 #include "glslshader.h"
 
 GLint

@@ -1,7 +1,16 @@
-//Name: Jaewoo Choi
-//Assignment name: Assignment_1
-//Course name: CS300
-//Term & Year : 2022&Fall
+/* Start Header -------------------------------------------------------
+Copyright (C) 2022 DigiPen Institute of Technology.
+Reproduction or disclosure of this file or its contents without the prior written
+consent of DigiPen Institute of Technology is prohibited.
+File Name: Camera.cpp
+Purpose: <This file contains definitions of member functions of class Camera.
+Decide position and view of camera with camera vector>
+Language: <c++>
+Platform: <Visual studio 2019, OpenGL 4.5, Window 64bit>
+Project: <jaewoo.choi_CS300_1>
+Author: <Jaewoo Choi, jaewoo.choi, 55532>
+Creation date: 25/09/2022
+End Header --------------------------------------------------------*/
 #include "Camera.h"
 #include"glhelper.h"
 #include "glm/gtc/matrix_transform.hpp"
@@ -14,7 +23,6 @@ Camera::Camera(glm::vec3 eye) :eye(eye), pitch(0), yaw(-90.0f), angle(0)
     cameraFront = glm::vec3(0.0f, 0.0f, -1.0f);
     cameraUp = glm::cross(cameraDirection, cameraRight);
     view = glm::translate(view, eye);
-    //view = glm::rotate(view, 3.14159f, glm::vec3(1.0f, 0.0f, 0.0f));
 }
 Camera::Camera(glm::vec3 eye, glm::vec3 direction) :eye(eye), cameraDirection(direction), pitch(0), yaw(-90.0f), angle(0)
 {
@@ -50,7 +58,6 @@ void Camera::Update(float dt)
     {
         eye += glm::normalize(glm::cross(cameraFront, cameraUp)) * speed * dt;
     }
-    //view = glm::translate(view, eye);
 
     view = glm::lookAt(eye, eye + cameraFront, cameraUp);
 

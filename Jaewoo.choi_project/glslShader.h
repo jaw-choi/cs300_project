@@ -16,7 +16,23 @@ appropriate shaders; and pass uniform variables from the client to the
 program object.
 
 *//*__________________________________________________________________________*/
-
+/* Start Header -------------------------------------------------------
+Copyright (C) 2022 DigiPen Institute of Technology.
+Reproduction or disclosure of this file or its contents without the prior written
+consent of DigiPen Institute of Technology is prohibited.
+File Name: glslShader.h
+Purpose: <This file contains the declaration of class GLSLShader that encapsulates the
+functionality required to load shader source; compile shader source; link
+shader objects into a program object, validate program object; log msesages
+from compiling linking, and validation steps; install program object in
+appropriate shaders; and pass uniform variables from the client to the
+program object.>
+Language: <c++>
+Platform: <Visual studio 2019, OpenGL 4.5, Window 64bit>
+Project: <jaewoo.choi_CS300_1>
+Author: <Jaewoo Choi, jaewoo.choi, 55532>
+Creation date: 14/09/2022
+End Header --------------------------------------------------------*/
 /*                                                                      guard
 ----------------------------------------------------------------------------- */
 #ifndef GLSLSHADER_H

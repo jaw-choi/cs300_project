@@ -1,15 +1,20 @@
-/******************************************************************************/
-/*!
-\file   mesh.hpp
-\par    Purpose: Library for generating polygonal meshes.
-\par    Language: C++
-\par    Platform: Visual Studio 2019, Windows 10 64-bit
-\author Sang Le
-\par    Email: sang.le\@digipen.edu, jaewoo.choi@digipen.edu
-\par    DigiPen login: sang.le, jaewoo.choi
-\date   15/09/2022
-*/
-/******************************************************************************/
+/* Start Header -------------------------------------------------------
+Copyright (C) 2022 DigiPen Institute of Technology.
+Reproduction or disclosure of this file or its contents without the prior written
+consent of DigiPen Institute of Technology is prohibited.
+File Name: Mesh.h
+Purpose: <This file contains the declaration of struct Mesh,vertex,
+functionality required to load shader source; compile shader source; link
+shader objects into a program object, validate program object; log msesages
+from compiling linking, and validation steps; install program object in
+appropriate shaders; and pass uniform variables from the client to the
+program object.>
+Language: <c++>
+Platform: <Visual studio 2019, OpenGL 4.5, Window 64 bit>
+Project: <jaewoo.choi_CS300_1>
+Author: <Jaewoo Choi, jaewoo.choi, 55532>
+Creation date: 14/09/2022
+End Header --------------------------------------------------------*/
 #pragma once
 #include <vector>
 #include <GL/glew.h> 

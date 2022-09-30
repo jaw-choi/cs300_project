@@ -1,15 +1,16 @@
-//Name: Jaewoo Choi
-//Assignment name: Assignment_1
-//Course name: CS300
-//Term & Year : 2022&Fall
-/*!
-@file    RendOBJ.cpp
-@author  Jaewoo.choi
-@date    15/09/2022
-
-Note :
-
-*//*__________________________________________________________________________*/
+/* Start Header -------------------------------------------------------
+Copyright (C) 2022 DigiPen Institute of Technology.
+Reproduction or disclosure of this file or its contents without the prior written
+consent of DigiPen Institute of Technology is prohibited.
+File Name: RendOBJ.cpp
+Purpose: <This file contains the definitions of class RendOBJ that encapsulates the
+functionality required to init and draw models>
+Language: <c++>
+Platform: <Visual studio 2019, OpenGL 4.5, Window 64 bit>
+Project: <jaewoo.choi_CS300_1>
+Author: <Jaewoo Choi, jaewoo.choi, 55532>
+Creation date: 14/09/2022
+End Header --------------------------------------------------------*/
 #include "RendOBJ.h"
 #include <imgui.h>
 #include <imgui_impl_opengl3.h>
@@ -33,7 +34,7 @@ void RendOBJ::init()
     camera = { {0.f, 0.f, 8.0f} };
     
     SetView();
-    //glPolygonMode(GL_FRONT_AND_BACK, GL_LINES);
+
 }
 
 void RendOBJ::Update(float deltaTime)

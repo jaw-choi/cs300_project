@@ -11,6 +11,22 @@ objects participating in the application.
 
 *//*__________________________________________________________________________*/
 
+/* Start Header -------------------------------------------------------
+Copyright (C) 2022 DigiPen Institute of Technology.
+Reproduction or disclosure of this file or its contents without the prior written
+consent of DigiPen Institute of Technology is prohibited.
+File Name: glhelper.h
+Purpose: <This file contains the declaration of namespace Helper that encapsulates the
+functionality required to create an OpenGL context using GLFW; use GLEW
+to load OpenGL extensions; initialize OpenGL state; and finally initialize
+the OpenGL application by calling initalization functions associated with
+objects participating in the application.>
+Language: <c++>
+Platform: <Visual studio 2019, OpenGL 4.5, Window 64bit>
+Project: <jaewoo.choi_CS300_1>
+Author: <Jaewoo Choi, jaewoo.choi, 55532>, Original author <pghali>
+Creation date: 14/09/2022
+End Header --------------------------------------------------------*/
 /*                                                                      guard
 ----------------------------------------------------------------------------- */
 #ifndef GLHELPER_H

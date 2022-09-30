@@ -1,11 +1,16 @@
-/* !
-@file    Engine.cpp
-@author  jaewoo.choi@digipen.edu
-@date    15/09/2022
-
-Note: 
-
-*//*__________________________________________________________________________*/
+/* Start Header -------------------------------------------------------
+Copyright (C) 2022 DigiPen Institute of Technology.
+Reproduction or disclosure of this file or its contents without the prior written
+consent of DigiPen Institute of Technology is prohibited.
+File Name: Engine.cpp
+Purpose: <This file contains definitions of member functions of class Engine.
+Manage whole demo and start the window>
+Language: <c++>
+Platform: <Visual studio 2019, OpenGL 4.5, Window 64bit>
+Project: <jaewoo.choi_CS300_1>
+Author: <Jaewoo Choi, jaewoo.choi, 55532>
+Creation date: 14/09/2022
+End Header --------------------------------------------------------*/
 #include "Engine.h"
 #include "glhelper.h"
 #include <imgui.h>
@@ -49,25 +54,20 @@ void Engine::Update()
 {
     glfwPollEvents();
     obj->Update(glfwGetTime());
-    //double delta_time = GLHelper::update_time(1.0);
-    //tests[current]->Update(static_cast<float>(delta_time));
+
 }
 
 void Engine::Draw()
 {
 
-    //tests[current]->Draw();
     glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT);
 
-    //TODO : make helper function with whole imgui
-    //ImGui_ImplOpenGL3_NewFrame();
-    //ImGui_ImplGlfw_NewFrame();
-    //ImGui::NewFrame();
+
 
     obj->Draw();
 
-    //ImGui::Begin("Demo");
+
     ImGui::Render();
     ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
