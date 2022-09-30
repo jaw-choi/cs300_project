@@ -12,7 +12,7 @@ program object.>
 Language: <c++>
 Platform: <Visual studio 2019, OpenGL 4.5, Window 64 bit>
 Project: <jaewoo.choi_CS300_1>
-Author: <Jaewoo Choi, jaewoo.choi, 55532>
+Author: <Jaewoo Choi, jaewoo.choi, 55532>, LoadShaders()some function from file of the professor
 Creation date: 14/09/2022
 End Header --------------------------------------------------------*/
 #define _CRT_SECURE_NO_WARNINGS
@@ -388,7 +388,7 @@ Mesh CreateOrbit(int num)
 {
     Mesh mesh;
     Vertex v;
-    int radius = 2.f;
+    int radius = 2;
     float theta = TWO_PI / (float)num;
     for (int i = 0; i <= num; i++)
     {
@@ -578,7 +578,7 @@ GLuint Mesh::LoadShaders(const char* vertex_file_path, const char* fragment_file
     }
     else {
         printf("Impossible to open %s. Are you in the right directory ? Don't forget to read the FAQ !\n", vertex_file_path);
-        getchar();
+        //getchar();
         return 0;
     }
 
@@ -605,8 +605,10 @@ GLuint Mesh::LoadShaders(const char* vertex_file_path, const char* fragment_file
     // Check Vertex Shader
     glGetShaderiv(VertexShaderID, GL_COMPILE_STATUS, &Result);
     glGetShaderiv(VertexShaderID, GL_INFO_LOG_LENGTH, &InfoLogLength);
+    int InfoLogLengthPlusOne = 0;
     if (InfoLogLength > 0) {
-        std::vector<char> VertexShaderErrorMessage(InfoLogLength + 1);
+        InfoLogLengthPlusOne = InfoLogLength + 1;
+        std::vector<char> VertexShaderErrorMessage(InfoLogLengthPlusOne);
         glGetShaderInfoLog(VertexShaderID, InfoLogLength, nullptr, &VertexShaderErrorMessage[0]);
         printf("%s\n", &VertexShaderErrorMessage[0]);
     }
@@ -622,7 +624,8 @@ GLuint Mesh::LoadShaders(const char* vertex_file_path, const char* fragment_file
     glGetShaderiv(FragmentShaderID, GL_COMPILE_STATUS, &Result);
     glGetShaderiv(FragmentShaderID, GL_INFO_LOG_LENGTH, &InfoLogLength);
     if (InfoLogLength > 0) {
-        std::vector<char> FragmentShaderErrorMessage(InfoLogLength + 1);
+        InfoLogLengthPlusOne = InfoLogLength + 1;
+        std::vector<char> FragmentShaderErrorMessage(InfoLogLengthPlusOne);
         glGetShaderInfoLog(FragmentShaderID, InfoLogLength, nullptr, &FragmentShaderErrorMessage[0]);
         printf("%s\n", &FragmentShaderErrorMessage[0]);
     }
@@ -639,7 +642,8 @@ GLuint Mesh::LoadShaders(const char* vertex_file_path, const char* fragment_file
     glGetProgramiv(ProgramID, GL_LINK_STATUS, &Result);
     glGetProgramiv(ProgramID, GL_INFO_LOG_LENGTH, &InfoLogLength);
     if (InfoLogLength > 0) {
-        std::vector<char> ProgramErrorMessage(InfoLogLength + 1);
+        InfoLogLengthPlusOne = InfoLogLength + 1;
+        std::vector<char> ProgramErrorMessage(InfoLogLengthPlusOne);
         glGetProgramInfoLog(ProgramID, InfoLogLength, nullptr, &ProgramErrorMessage[0]);
         printf("%s\n", &ProgramErrorMessage[0]);
     }
@@ -655,11 +659,7 @@ GLuint Mesh::LoadShaders(const char* vertex_file_path, const char* fragment_file
         std::exit(EXIT_FAILURE);
     }
 
-    glDetachShader(ProgramID, VertexShaderID);
-    glDetachShader(ProgramID, FragmentShaderID);
 
-    glDeleteShader(VertexShaderID);
-    glDeleteShader(FragmentShaderID);
 
     return ProgramID;
 }
@@ -675,7 +675,7 @@ void Mesh::draw(glm::vec3 color, glm::mat4 view, glm::mat4 projection, glm::vec3
         0,0,1,0,
         0,0,0,1
     };
-    //TODO
+
     model = glm::translate(model, position);
     model = glm::rotate(model, rotation.x, glm::vec3(1.0f, 0.0f, 0.0f));
     model = glm::rotate(model, rotation.y, glm::vec3(0.0f, 1.0f, 0.0f));
@@ -857,38 +857,41 @@ Mesh LoadOBJ(const char* path)
 void ReadOBJ(const char* path,Mesh& mesh, MinMax& m, LengthMinMax& lm)
 {
     Vertex v;
-
-    FILE* file = fopen(path, "r");
-    if (file == NULL) {
-        printf("There is no suitable file!\n");
+    std::ifstream file{ path };
+    if (!file)
+    {
+        throw std::runtime_error(std::string("ERROR: Unable to open scene file: ") + path);
     }
 
-    while (true) {
+    std::string line;
+    char mode;
 
-        char lineHeader[128];
-        // read the first word of the line
-        int res = fscanf(file, "%s", lineHeader);
-        if (res == EOF)
-            break; // EOF = End Of File. Quit the loop.
+    while (file) {
 
-        // else : parse lineHeader
+        getline(file, line);
+        if (line.empty())
+        {
+            continue;
+        }
 
-        if (strcmp(lineHeader, "v") == 0) {
+        std::istringstream sstr{ line };
+        sstr >> mode;
+        if (mode == 'v')
+        {
+            sstr >> v.pos.x >> v.pos.y >> v.pos.z;
 
-            fscanf(file, "%f %f %f\n", &v.pos.x, &v.pos.y, &v.pos.z);
             addVertex(mesh, v);
             CalculateMinMax(v, m);
-
-
         }
-        else if (strcmp(lineHeader, "f") == 0) {
-            std::string vertex1, vertex2, vertex3;
+        else if (mode == 'f') {
             unsigned int vertexIndex[3];
-            int matches = fscanf(file, "%d %d %d \n", &vertexIndex[0], &vertexIndex[1], &vertexIndex[2]);
-            if (matches != 3) {
-                printf("File can't be read by our simple parser : ( Try exporting with other options\n");
-                //return false;
-            }
+            sstr >> vertexIndex[0] >> vertexIndex[1] >> vertexIndex[2];
+
+
+            //if (matches != 3) {
+            //    printf("File can't be read by our simple parser : ( Try exporting with other options\n");
+            //    //return false;
+            //}
             addIndex(mesh, vertexIndex[0]-1);
             addIndex(mesh, vertexIndex[1]-1);
             addIndex(mesh, vertexIndex[2]-1);
@@ -903,7 +906,7 @@ void ReadOBJ(const char* path,Mesh& mesh, MinMax& m, LengthMinMax& lm)
 
 Mesh CalculateMesh(Mesh& mesh, MinMax& m, LengthMinMax& lm)
 {
-    GLushort ia, ib, ic;
+    int ia, ib, ic;
     size_t sizeOfIndicies = mesh.numIndices;
     std::vector<int> nb_seen;
     nb_seen.resize(mesh.numVertices, 0);
@@ -912,29 +915,32 @@ Mesh CalculateMesh(Mesh& mesh, MinMax& m, LengthMinMax& lm)
     int doubleNumFaceVertices = mesh.numTris * 2;
     int NumVertice = mesh.numVertices;
     mesh.faceBuffer.resize(mesh.numTris, Vertex());
-    prevNormal.resize(mesh.numVertices, std::vector<glm::vec3>(0));
+    prevNormal.resize(NumVertice, std::vector<glm::vec3>(0));
 
-    mesh.vertexBufferForVertexNrm.resize(mesh.numVertices * 2, Vertex());
-    mesh.vertexBufferForFaceNrm.resize(mesh.numTris * 2, Vertex());
+    mesh.vertexBufferForVertexNrm.resize(doubleNumVertices, Vertex());
+    mesh.vertexBufferForFaceNrm.resize(doubleNumFaceVertices, Vertex());
 
     
     //Move to origin
     glm::vec3 origin = { 0,0,0 };
     MoveToOrigin(mesh, origin, m);
 
-    for (int i = 0; i < mesh.numVertices; i++)
+    for (int i = 0; i < NumVertice; i++)
     {
 
         mesh.vertexBuffer[i].pos.x = 2 * ((mesh.vertexBuffer[i].pos.x- m.min.x) / lm.lenX) -1.f;
         mesh.vertexBuffer[i].pos.y = 2 * ((mesh.vertexBuffer[i].pos.y- m.min.y) / lm.lenY) -1.f;
         mesh.vertexBuffer[i].pos.z = 2 * ((mesh.vertexBuffer[i].pos.z- m.min.z) / lm.lenZ) -1.f;
     }
-
+    int ione = 0;
+    int itwo = 0;
     for (unsigned int i = 0; i < sizeOfIndicies; i += 3) {
 
         ia = mesh.indexBuffer[i];
-        ib = mesh.indexBuffer[i + 1];
-        ic = mesh.indexBuffer[i + 2];
+        ione = i + 1;
+        ib = mesh.indexBuffer[ione];
+        itwo = i + 2;
+        ic = mesh.indexBuffer[itwo];
 
         glm::vec3 normal = Normalize(glm::cross(
             mesh.vertexBuffer[ib].pos - mesh.vertexBuffer[ia].pos,
@@ -951,7 +957,7 @@ Mesh CalculateMesh(Mesh& mesh, MinMax& m, LengthMinMax& lm)
         for (int j = 0; j < 3; j++) 
         {
             bool IgnoreParrel = false;
-            GLushort cur_v = v[j];
+            int cur_v = v[j];
             nb_seen[cur_v]++;
             if (nb_seen[cur_v] == 1)
             {
@@ -960,33 +966,34 @@ Mesh CalculateMesh(Mesh& mesh, MinMax& m, LengthMinMax& lm)
             }
             else
             {
-                for (int i = 0; i < prevNormal[cur_v].size(); i++)
+                for (int k = 0; k < prevNormal[cur_v].size(); k++)
                 {
-                    if (prevNormal[cur_v][i] == normal)
+                    if (prevNormal[cur_v][k] == normal)
                         IgnoreParrel = true;
                 }
                 // average
                 if (IgnoreParrel != true)
                 {
-                    mesh.vertexBuffer[cur_v].nrm.x = mesh.vertexBuffer[cur_v].nrm.x * (1.0 - 1.0 / nb_seen[cur_v]) + normal.x * 1.0 / nb_seen[cur_v];
-                    mesh.vertexBuffer[cur_v].nrm.y = mesh.vertexBuffer[cur_v].nrm.y * (1.0 - 1.0 / nb_seen[cur_v]) + normal.y * 1.0 / nb_seen[cur_v];
-                    mesh.vertexBuffer[cur_v].nrm.z = mesh.vertexBuffer[cur_v].nrm.z * (1.0 - 1.0 / nb_seen[cur_v]) + normal.z * 1.0 / nb_seen[cur_v];
+                    mesh.vertexBuffer[cur_v].nrm.x = mesh.vertexBuffer[cur_v].nrm.x * (1.f - 1.f / nb_seen[cur_v]) + normal.x * 1.f / nb_seen[cur_v];
+                    mesh.vertexBuffer[cur_v].nrm.y = mesh.vertexBuffer[cur_v].nrm.y * (1.f - 1.f / nb_seen[cur_v]) + normal.y * 1.f / nb_seen[cur_v];
+                    mesh.vertexBuffer[cur_v].nrm.z = mesh.vertexBuffer[cur_v].nrm.z * (1.f - 1.f / nb_seen[cur_v]) + normal.z * 1.f / nb_seen[cur_v];
                     mesh.vertexBuffer[cur_v].nrm = glm::normalize(mesh.vertexBuffer[cur_v].nrm);
                 }
             }
         }
     }
     //face normal
-    int k = 0;
+    int f = 0;
     mesh.numVerticesFaceLine = 0;
     for (int i = 0; i < doubleNumFaceVertices; i += 2)
     {
-        mesh.vertexBufferForFaceNrm[i].pos = mesh.faceBuffer[k].pos;
-        mesh.vertexBufferForFaceNrm[i + 1].pos = mesh.faceBuffer[k].pos + (mesh.faceBuffer[k].nrm/ 7.f);
+        mesh.vertexBufferForFaceNrm[i].pos = mesh.faceBuffer[f].pos;
+        ione = i + 1;
+        mesh.vertexBufferForFaceNrm[ione].pos = mesh.faceBuffer[f].pos + (mesh.faceBuffer[f].nrm/ 7.f);
 
         mesh.numVerticesFaceLine += 2;
 
-        k++;
+        f++;
     }
 
     //vertex normal
@@ -995,7 +1002,8 @@ Mesh CalculateMesh(Mesh& mesh, MinMax& m, LengthMinMax& lm)
     for (int i = 0; i < doubleNumVertices; i+=2)
     {
         mesh.vertexBufferForVertexNrm[i].pos = mesh.vertexBuffer[j].pos;
-        mesh.vertexBufferForVertexNrm[i+1].pos = mesh.vertexBuffer[j].pos + (mesh.vertexBuffer[j].nrm/7.f);
+        ione = i + 1;
+        mesh.vertexBufferForVertexNrm[ione].pos = mesh.vertexBuffer[j].pos + (mesh.vertexBuffer[j].nrm/7.f);
 
         mesh.numVerticesLine += 2;
 
@@ -1025,7 +1033,7 @@ void CalculateMinMax(Vertex v, MinMax& m)
 
 void MoveToOrigin(Mesh& mesh, glm::vec3& origin, MinMax& m)
 {
-    for (int i = 0; i < mesh.numVertices; i++)
+    for (int i = 0; i < mesh.numVertices; i++) 
     {
         origin.x += mesh.vertexBuffer[i].pos.x;
         origin.y += mesh.vertexBuffer[i].pos.y;

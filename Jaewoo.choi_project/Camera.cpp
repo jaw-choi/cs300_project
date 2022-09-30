@@ -24,11 +24,11 @@ Camera::Camera(glm::vec3 eye) :eye(eye), pitch(0), yaw(-90.0f), angle(0)
     cameraUp = glm::cross(cameraDirection, cameraRight);
     view = glm::translate(view, eye);
 }
-Camera::Camera(glm::vec3 eye, glm::vec3 direction) :eye(eye), cameraDirection(direction), pitch(0), yaw(-90.0f), angle(0)
+Camera::Camera(glm::vec3 eye, glm::vec3 _direction) :eye(eye), cameraDirection(_direction), pitch(0), yaw(-90.0f), angle(0)
 {
     cameraTarget = glm::vec3(0.0f, 0.0f, 0.0f);
-    cameraRight = glm::normalize(glm::cross(glm::vec3(0.0f, 1.0f, 0.0f), direction));
-    cameraUp = glm::cross(direction, cameraRight);
+    cameraRight = glm::normalize(glm::cross(glm::vec3(0.0f, 1.0f, 0.0f), _direction));
+    cameraUp = glm::cross(_direction, cameraRight);
 }
 void Camera::Update(float dt)
 {
@@ -62,7 +62,7 @@ void Camera::Update(float dt)
     view = glm::lookAt(eye, eye + cameraFront, cameraUp);
 
 }
-glm::vec3 Camera::mouse_update(float)
+glm::vec3 Camera::mouse_update()
 {
     double mouse_pos_x = 0;
     double mouse_pos_y = 0;
@@ -97,14 +97,14 @@ glm::vec3 Camera::mouse_update(float)
         mouse_start = false;
     }
 
-    glm::vec3 direction= cameraDirection;
-    direction.x += cos(glm::radians(yaw)) * cos(glm::radians(pitch));
-    direction.y += sin(glm::radians(pitch));
-    direction.z += sin(glm::radians(yaw)) * cos(glm::radians(pitch));
-    cameraFront = glm::normalize(direction);
-    cameraRight = glm::normalize(glm::cross(direction, cameraUp));  // normalize the vectors, because their length gets closer to 0 the more you look up or down which results in slower movement.
-    cameraUp = glm::normalize(glm::cross(cameraRight, direction));
-    return (direction);
+    glm::vec3 camDirection= cameraDirection;
+    camDirection.x += cos(glm::radians(yaw)) * cos(glm::radians(pitch));
+    camDirection.y += sin(glm::radians(pitch));
+    camDirection.z += sin(glm::radians(yaw)) * cos(glm::radians(pitch));
+    cameraFront = glm::normalize(camDirection);
+    cameraRight = glm::normalize(glm::cross(camDirection, cameraUp));  // normalize the vectors, because their length gets closer to 0 the more you look up or down which results in slower movement.
+    cameraUp = glm::normalize(glm::cross(cameraRight, camDirection));
+    return (camDirection);
 }
 glm::mat4& Camera::GetViewMatrix()
 {

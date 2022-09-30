@@ -19,9 +19,9 @@ class Camera
 public:
     Camera() = default;
     Camera(glm::vec3 eye);
-    Camera(glm::vec3 eye, glm::vec3 direction);
+    Camera(glm::vec3 eye, glm::vec3 _direction);
     void Update(float dt);
-    glm::vec3 mouse_update(float dt);
+    glm::vec3 mouse_update();
     glm::mat4& GetViewMatrix();
     glm::vec3 GetEye();
 

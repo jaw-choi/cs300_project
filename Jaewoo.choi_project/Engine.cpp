@@ -53,7 +53,7 @@ void Engine::init()
 void Engine::Update()
 {
     glfwPollEvents();
-    obj->Update(glfwGetTime());
+    obj->Update((float)glfwGetTime());
 
 }
 
