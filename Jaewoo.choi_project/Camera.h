@@ -6,7 +6,7 @@ File Name: Camera.h
 Purpose: <This file contains declaration of class Camera.>
 Language: <c++>
 Platform: <Visual studio 2019, OpenGL 4.5, Window 64bit>
-Project: <jaewoo.choi_CS300_1>
+Project: <jaewoo.choi_CS300_2>
 Author: <Jaewoo Choi, jaewoo.choi, 55532>
 Creation date: 25/09/2022
 End Header --------------------------------------------------------*/
@@ -24,6 +24,7 @@ public:
     glm::vec3 mouse_update();
     glm::mat4& GetViewMatrix();
     glm::vec3 GetEye();
+    glm::vec3 GetFront();
 
     glm::mat4      view = {
     1,0,0,0,

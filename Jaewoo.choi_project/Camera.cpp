@@ -7,7 +7,7 @@ Purpose: <This file contains definitions of member functions of class Camera.
 Decide position and view of camera with camera vector>
 Language: <c++>
 Platform: <Visual studio 2019, OpenGL 4.5, Window 64bit>
-Project: <jaewoo.choi_CS300_1>
+Project: <jaewoo.choi_CS300_2>
 Author: <Jaewoo Choi, jaewoo.choi, 55532>
 Creation date: 25/09/2022
 End Header --------------------------------------------------------*/
@@ -114,4 +114,9 @@ glm::mat4& Camera::GetViewMatrix()
 glm::vec3 Camera::GetEye()
 {
     return eye;
+}
+
+glm::vec3 Camera::GetFront()
+{
+    return cameraFront;
 }

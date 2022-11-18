@@ -8,7 +8,7 @@ File Name: line.frag
 Purpose: <This file contains frament shader that draw all white>
 Language: <c++>
 Platform: <Visual studio 2019, OpenGL 4.5, Window 64 bit>
-Project: <jaewoo.choi_CS300_1>
+Project: <jaewoo.choi_CS300_2>
 Author: <Jaewoo Choi, jaewoo.choi, 55532>
 Creation date: 14/09/2022
 End Header --------------------------------------------------------*/

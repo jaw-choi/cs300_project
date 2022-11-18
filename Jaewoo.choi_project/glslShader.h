@@ -29,9 +29,9 @@ appropriate shaders; and pass uniform variables from the client to the
 program object.>
 Language: <c++>
 Platform: <Visual studio 2019, OpenGL 4.5, Window 64bit>
-Project: <jaewoo.choi_CS300_1>
+Project: <jaewoo.choi_CS300_2>
 Author: <Jaewoo Choi, jaewoo.choi, 55532>
-Creation date: 14/09/2022
+Creation date: 04/11/2022
 End Header --------------------------------------------------------*/
 /*                                                                      guard
 ----------------------------------------------------------------------------- */

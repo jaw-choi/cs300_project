@@ -6,19 +6,15 @@ c. Used ImGui to change the model and draw vertex,face normal.Also you can contr
 
 d. none
 
-e. 	o Setting up an OpenGL application 
-		493to529, 668to700,774to799 in mesh.cpp
-		67to127 in glhelper.cpp
-	o Reading data from an OBJ file without errors
-		845 to 1053 in mesh.cpp
-	o Implementing vertex and fragment shaders corresponding to Phong Lighting
-	In triangle.vert,triangle.frag shader file
-	o Scene setup for the assignment is as per specification – Central object + rotating spheres
-	907 to 1014 , 683 in mesh.cpp
-	o Face & vertex normals calculation and display
-	907 to 1014, 702 to 770 in mesh.cpp
-	o Miscellaneous issues (GUI controls, compilation or execution issues, etc.)
-	50 to 63, 65 to 163 in RendOBJ.cpp
+e.
+ 	o Shaders: Phong Lighting 10
+ 	o Shaders: Phong Shading 10
+ 	o Shaders: Blinn Shading 10
+ 	o Scene & Light setup 20
+ 	o Material setup 10
+ 	o Light properties 20
+ 	o GUI Functionality 10
+ 	o Miscellaneous issues (compilation or execution issues, etc.
 
 f. none
 

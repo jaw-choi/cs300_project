@@ -15,6 +15,7 @@ End Header --------------------------------------------------------*/
 
 layout(location=1) in vec3 NRM;
 
+
 in vec3 FragPos; 
 uniform vec4 color;
 uniform vec2 triline;
@@ -32,6 +33,8 @@ float diff = max(dot(norm, lightDir), 0.0);
 vec3 diffuse = diff * lightColor;
 vec3 viewDir = normalize(viewPos - FragPos);
 vec3 reflectDir = reflect(-lightDir,norm);
+
+vec3 halfwayDir = normalize(lightDir + viewDir);
 
 float specularStrength = 0.5;
 float spec = pow(max(dot(viewDir, reflectDir), 0.0), 32);

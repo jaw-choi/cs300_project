@@ -7,14 +7,13 @@ Purpose: <This file contains the declaration of class RendOBJ that encapsulates 
 functionality required to init and draw models>
 Language: <c++>
 Platform: <Visual studio 2019, OpenGL 4.5, Window 64 bit>
-Project: <jaewoo.choi_CS300_1>
+Project: <jaewoo.choi_CS300_2>
 Author: <Jaewoo Choi, jaewoo.choi, 55532>
-Creation date: 14/09/2022
+Creation date: 04/11/2022
 End Header --------------------------------------------------------*/
 #pragma once
 
 #include"Mesh.h"
-
 
 
 class RendOBJ
@@ -27,6 +26,10 @@ public:
     void Draw();
     void OnImGuiRender();
     void UnLoad();
+
+    void InitPhongShading();
+    void InitblinnLighting();
+    void InitPhongLighting();
 
     void InitBunny();
     void InitSphere();
@@ -43,7 +46,10 @@ public:
     const GLfloat bgColor[4] = { 0.0f, 0.0f, 0.0f, 1.0f };
 
     Vec4 useNormal = Vec4(0.9f, 0.9f, 0.9f, 1.0f);
-
+    int numberLamp = 16;
+    GLuint phongLightID = 0;
+    GLuint phongShadingID = 0;
+    GLuint blinnID = 0;
 private:
     Camera camera;
     glm::mat4 view;
@@ -53,5 +59,15 @@ private:
     bool vertxNrm[5] = { false,false,false,false,false };
     bool faceNrm[5] = { false,false,false,false,false };
     bool meshSwitch[5] = { true,false,false,false,false };
-
+    bool shaderSwitch[3] = { true,false,false };
+    bool lightSwitch[16] = { false,};
+    std::vector<DirLight> dirlight;
+    bool isRotationLamp = false;
+    int currentLamp = 0;
+    int typeMapping = 1;
+    std::vector<lampSet> lampSetting;
+    Global global{};
+    Material mate{};
+    bool checkTexture = false;
+    int shaderType = 0;
 };

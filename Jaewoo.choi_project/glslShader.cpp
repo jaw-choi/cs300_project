@@ -21,9 +21,9 @@ Purpose: <This file contains definitions of member functions of class GLShader.
 Please see the class declaration for information about these functions.>
 Language: <c++>
 Platform: <Visual studio 2019, OpenGL 4.5, Window 64bit>
-Project: <jaewoo.choi_CS300_1>
+Project: <jaewoo.choi_CS300_2>
 Author: <Jaewoo Choi, jaewoo.choi, 55532>
-Creation date: 14/09/2022
+Creation date: 04/11/2022
 End Header --------------------------------------------------------*/
 #include "glslshader.h"
 
@@ -353,17 +353,17 @@ void GLSLShader::PrintActiveAttribs() const {
     glGetProgramiv(pgm_handle, GL_ACTIVE_ATTRIBUTE_MAX_LENGTH, &max_length);
     glGetProgramiv(pgm_handle, GL_ACTIVE_ATTRIBUTES, &num_attribs);
     GLchar* pname = new GLchar[max_length];
-    std::cout << "Index\t|\tName\n";
-    std::cout << "----------------------------------------------------------------------\n";
+   // std::cout << "Index\t|\tName\n";
+    //std::cout << "----------------------------------------------------------------------\n";
     for (GLint i = 0; i < num_attribs; ++i) {
         GLsizei written;
         GLint size;
         GLenum type;
         glGetActiveAttrib(pgm_handle, i, max_length, &written, &size, &type, pname);
         GLint loc = glGetAttribLocation(pgm_handle, pname);
-        std::cout << loc << "\t\t" << pname << std::endl;
+       // std::cout << loc << "\t\t" << pname << std::endl;
     }
-    std::cout << "----------------------------------------------------------------------\n";
+    //std::cout << "----------------------------------------------------------------------\n";
     delete[] pname;
 
 #else
@@ -391,16 +391,16 @@ void GLSLShader::PrintActiveUniforms() const {
     GLchar* pname = new GLchar[max_length];
     GLint num_uniforms;
     glGetProgramiv(pgm_handle, GL_ACTIVE_UNIFORMS, &num_uniforms);
-    std::cout << "Location\t|\tName\n";
-    std::cout << "----------------------------------------------------------------------\n";
+    //std::cout << "Location\t|\tName\n";
+    //std::cout << "----------------------------------------------------------------------\n";
     for (GLint i = 0; i < num_uniforms; ++i) {
         GLsizei written;
         GLint size;
         GLenum type;
         glGetActiveUniform(pgm_handle, i, max_length, &written, &size, &type, pname);
         GLint loc = glGetUniformLocation(pgm_handle, pname);
-        std::cout << loc << "\t\t" << pname << std::endl;
+        //std::cout << loc << "\t\t" << pname << std::endl;
     }
-    std::cout << "----------------------------------------------------------------------\n";
+    //std::cout << "----------------------------------------------------------------------\n";
     delete[] pname;
 }
