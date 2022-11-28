@@ -328,60 +328,6 @@ Mesh CreateCone(int stacks, int slices)
     }
     BuildIndexBuffer(stacks, slices, mesh);
 
-    //int vertex_size = static_cast<int>(mesh.vertexBuffer.size());
-
-    /////// For the caps
-
-    //for (int i = 0; i < 1; i++)
-    //{
-    //    if (i == 0)
-    //    {
-    //        v.pos = Vec3(0.0, -0.5f, 0.0);
-    //        v.nrm.x = v.pos.x / 0.5f;
-    //        v.nrm.y = v.pos.y / 0.5f;
-    //        v.nrm.z = v.pos.z / 0.5f;
-    //    }
-
-    //    addVertex(mesh, v);
-
-    //    float row = static_cast<float>(i) / stacks;
-
-    //    for (int j = 0; j <= slices; j++)
-    //    {
-    //        float col_ = static_cast<float>(j) / slices;
-    //        float alpha_ = col_ * 2.0f * PI;
-    //        float sinAlpha = sin(alpha_);
-    //        float cosAlpha = cos(alpha_);
-
-    //        v.uv.x = row;
-    //        v.uv.y = col_;
-
-    //        v.pos = Vec3(0.5 * sinAlpha, -0.5f, 0.5f * cosAlpha);
-
-    //        v.nrm.x = v.pos.x / 0.5f;
-    //        v.nrm.y = v.pos.y / 0.5f;
-    //        v.nrm.z = v.pos.z / 0.5f;
-
-
-    //        addVertex(mesh, v);
-    //    }
-    //}
-
-    //for (int i = 0; i <= stacks; i++)
-    //{
-    //    vertex_size += (i * (slices + 2));
-
-    //    for (int j = 1; j < slices; j++)
-    //    {
-    //        addIndex(mesh, vertex_size);
-    //        addIndex(mesh, vertex_size + j + 1);
-    //        addIndex(mesh, vertex_size + j);
-    //    }
-    //    addIndex(mesh, vertex_size);
-    //    addIndex(mesh, vertex_size + 1);
-    //    addIndex(mesh, vertex_size + slices);
-    //}
-
 
     return  mesh;
 }
@@ -510,11 +456,7 @@ void Mesh::init(const char* vertex_file_path, const char* fragment_file_path, gl
 
 
 
-    //glUniform1i(glGetUniformLocation(renderProg.GetHandle(), "material.emissive"), 2);
-
-    //modelLoc = glGetUniformLocation(renderProg.GetHandle(), "model");
-    //viewLoc = glGetUniformLocation(renderProg.GetHandle(), "view");
-    //projectionLoc = glGetUniformLocation(renderProg.GetHandle(), "projection");
+  
     colorLoc = glGetUniformLocation(ProgramID, "color");
 
     diffuseLoc = glGetUniformLocation(ProgramID, "diffuse");
@@ -528,24 +470,7 @@ void Mesh::init(const char* vertex_file_path, const char* fragment_file_path, gl
 
     SendVertexData();
 
-    //SendVertexDataForLine();
-    //SendVertexDataForFaceLine();
 
-
-    //glGenRenderbuffers(1, &DepthBuffer);
-    //glBindRenderbuffer(GL_RENDERBUFFER, DepthBuffer);
-    //glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, 1024, 768);
-    //glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER,  DepthBuffer);
-
-    //glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, cubemapTexture[0], 0);//TODO
-
-    //glBindFramebuffer(GL_FRAMEBUFFER, FBO);
-
-    /*  Initially drawing using filled mode */
-
-    /*  Hidden surface removal */
-
-    //glDepthMask(GL_FALSE);
 }
 
 
@@ -979,12 +904,6 @@ void Mesh::drawLight(glm::mat4 view, glm::mat4 projection, glm::vec3 light_pos, 
 {
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
     glEnable(GL_DEPTH_TEST);
-    if (shaderType == 0)
-        ProgramID = A;
-    else if (shaderType == 1)
-        ProgramID = B;
-    else if (shaderType == 2)
-        ProgramID = C;
 
     glUseProgram(ProgramID);
 
@@ -1173,9 +1092,6 @@ void Mesh::drawSkyBox(glm::mat4 view, glm::mat4 projection, Camera cam)
 {
     // second render pass: draw as normal
     // ----------------------------------
-    //glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
-    //glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    //glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
     glUseProgram(SkyProgramID);
 
@@ -1225,9 +1141,7 @@ void Mesh::drawSkyBoxForFrame(glm::mat4 view, glm::mat4 projection, Camera cam)
 {
     // second render pass: draw as normal
     // ----------------------------------
-    //glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
-    //glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    //glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
     glDisable(GL_DEPTH_TEST);
     glUseProgram(SkyProgramID);
 
@@ -1792,62 +1706,7 @@ std::vector<GLuint> Mesh::loadCubemap(std::vector<std::string> faces)
 void Mesh::setTexture()
 {
     cubemapTextureEnvironment = loadCubemap(faces);
-    //glGenTextures(1, &diffuseMap);
-    //
-    ////glGenTextures(1, &emissionMap);
-
-    //int imageWidth = 0, imageHeight = 0, channel = 0;
-
-
-    //unsigned char* image;
-    //// Diffuse map
-    ////image = readPPM("../textures/metal_roof_diff_512x512.ppm", imageWidth, imageHeight);
-    //image = stbi_load("../textures/top.jpg", &imageWidth, &imageHeight, &channel, 0);
-
-    //glActiveTexture(GL_TEXTURE0);
-    //glBindTexture(GL_TEXTURE_2D, diffuseMap);
-
-
-    //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
-    //if (image)
-    //{
-    //    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, imageWidth, imageHeight, 0, GL_RGB, GL_UNSIGNED_BYTE, image);
-    //    glGenerateMipmap(GL_TEXTURE_2D);
-    //}
-    //else
-    //{
-    //    std::cout << "Failed to load texture" << std::endl;
-    //}
-    //stbi_image_free(image);
-    //glBindTexture(GL_TEXTURE_2D, 0);
-
-    //glGenTextures(1, &specularMap);
-    //glBindTexture(GL_TEXTURE_2D, specularMap);
-
-    //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
-
-    //// Specular map
-    //image = stbi_load("../textures/right.jpg", &imageWidth, &imageHeight, &channel, 0);
-
-    //if (image)
-    //{
-    //    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, imageWidth, imageHeight, 0, GL_RGB, GL_UNSIGNED_BYTE, image);
-    //    glGenerateMipmap(GL_TEXTURE_2D);
-    //}
-    //else
-    //{
-    //    std::cout << "Failed to load texture" << std::endl;
-    //}
-    //stbi_image_free(image);
-    //glBindTexture(GL_TEXTURE_2D, 0);
+    
 
 }
 
