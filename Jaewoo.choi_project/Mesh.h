@@ -11,7 +11,7 @@ appropriate shaders; and pass uniform variables from the client to the
 program object.>
 Language: <c++>
 Platform: <Visual studio 2019, OpenGL 4.5, Window 64 bit>
-Project: <jaewoo.choi_CS300_2>
+Project: <jaewoo.choi_CS300_3>
 Author: <Jaewoo Choi, jaewoo.choi, 55532>
 Creation date: 04/11/2022
 End Header --------------------------------------------------------*/
@@ -21,6 +21,8 @@ End Header --------------------------------------------------------*/
 #include"math.h"
 #include"glslshader.h"
 #include "Camera.h"
+
+
 
 struct Global
 {
@@ -122,6 +124,8 @@ struct LengthMinMax
     float lenY = 0;
     float lenZ = 0;
 };
+
+
 const int layoutSize = sizeof(VertexLayout);
 const int numAttribs = sizeof(vLayout) / layoutSize;    // for now numAttribs = 1: only pos
 
@@ -136,6 +140,7 @@ struct Mesh
     Mesh() : numVertices(0), numTris(0), numIndices(0), position{ 0 }, scale{ 1 }, rotation{ 0 }, VBO{ 0 }, VAO{ 0 }
     { }
     GLuint ProgramID;
+    GLuint SkyProgramID;
     /*  Storing the actual vertex/index data */
     VertexBufferType vertexBuffer;
     IndexBufferType indexBuffer;
@@ -161,6 +166,8 @@ struct Mesh
     GLuint VBOFL;
     GLuint IBO;
     GLuint UBO;
+    GLuint FBO;
+    GLuint RBO;
     GLSLShader renderProg{ GLSLShader() };
 
     GLuint diffuseMap, specularMap, emissionMap;
@@ -185,8 +192,17 @@ struct Mesh
     GLint shininessLoc = 0;
     GLuint texture = 0;
 
-
-
+    GLenum DrawBuffers[6] = { GL_COLOR_ATTACHMENT0 };
+    GLuint numBuffers = 6;
+    std::vector<std::string> faces
+    {
+            "../textures/right.jpg",
+            "../textures/left.jpg",
+            "../textures/top.jpg",
+            "../textures/bottom.jpg",
+            "../textures/front.jpg",
+            "../textures/back.jpg"
+    };
     std::vector<glm::vec2> uvPlanar;
     std::vector<glm::vec2> uvCyndrical;
     std::vector<glm::vec2> uvSpherical;
@@ -198,11 +214,18 @@ struct Mesh
     glm::vec3 rotation{ 0,0,0 };
 
     GLuint LoadShaders(const char* vertex_file_path, const char* fragment_file_path);
-    void init(const char* vertex_file_path, const char* fragment_file_path,  GLuint& A, GLuint& B, GLuint& C,  glm::vec3 Pos = { 0,0,0 }, glm::vec3 Scale = { 1,1,1 }, glm::vec3 Rotate = { 0,0,0 }, int numlamp=16);
+    GLuint LoadShaders(const char* vertex_file_path, const char* fragment_file_path, const char* geometry_file_path);
+    void init(const char* vertex_file_path, const char* fragment_file_path,  glm::vec3 Pos = { 0,0,0 }, glm::vec3 Scale = { 1,1,1 }, glm::vec3 Rotate = { 0,0,0 }, int numlamp=16);
+    void initFrame(const char* vertex_file_path, const char* fragment_file_path, const char* geometry_file_path,  glm::vec3 Pos = { 0,0,0 }, glm::vec3 Scale = { 1,1,1 }, glm::vec3 Rotate = { 0,0,0 });
+    void initSkyBox(const char* vertex_file_path, const char* fragment_file_path, const char* geometry_file_path,  glm::vec3 Pos = { 0,0,0 }, glm::vec3 Scale = { 1,1,1 }, glm::vec3 Rotate = { 0,0,0 });
     void initLight(const char* vertex_file_path, const char* fragment_file_path, glm::vec3 Pos = { 0,0,0 }, glm::vec3 Scale = { 1,1,1 }, glm::vec3 Rotate = { 0,0,0 }, bool obj = true);
     void initLamp(const char* vertex_file_path, const char* fragment_file_path, glm::vec3 Pos = { 0,0,0 }, glm::vec3 Scale = { 1,1,1 }, glm::vec3 Rotate = { 0,0,0 });
     void initLine(const char* vertex_file_path, const char* fragment_file_path, glm::vec3 Pos = { 0,0,0 }, glm::vec3 Scale = { 1,1,1 }, glm::vec3 Rotate = { 0,0,0 });
     
+    
+    std::vector<GLuint> cubemapTextureEnvironment;
+    std::vector<GLuint> loadCubemap(std::vector<std::string> faces);
+
     void setTexture();
     void setTextureGrid();
     GLfloat* readPPM(const char* ppm_file_path, int& width, int& height);
@@ -214,9 +237,16 @@ struct Mesh
     void setup_shdrpgm(std::string shader);
     //void setup_mesh();
     //void compute_matrix(float delta_time);
-    void draw(glm::mat4 view, glm::mat4 projection, glm::vec3 light_pos, glm::vec3 view_pos, std::vector<DirLight> dl, int numlamp, Global global, Material mater);
+    void draw(glm::mat4 view, glm::mat4 projection, glm::vec3 light_pos, glm::vec3 view_pos,
+        std::vector<DirLight> dl, int numlamp, Global global, Material mater,
+        std::vector<GLuint> cubemapTexture,bool reflect,bool refract , int indexFresnel,
+        std::vector<float> refractiveIndex, std::vector<float> fresnelC, float FresnelPower );
     void drawLamp(glm::mat4 view, glm::mat4 projection, int numberLamp, std::vector<DirLight> dl, std::vector<lampSet> lampSetting);
-    void drawLight(glm::mat4 view, glm::mat4 projection, glm::vec3 light_pos, glm::vec3 view_pos, std::vector<DirLight> dl,int numlamp, Global global, Material mater,int typeMapping, int shaderType, GLuint A, GLuint B, GLuint C);
+    void drawLampForFrame(int numberLamp, std::vector<DirLight> dl);
+    void drawLight(glm::mat4 view, glm::mat4 projection, glm::vec3 light_pos, glm::vec3 view_pos, std::vector<DirLight> dl,int numlamp, Global global, Material mater,int typeMapping, int shaderType, GLuint A, float B, GLuint C);
+    void drawSkyBox(glm::mat4 view, glm::mat4 projection, Camera cam);
+    void drawSkyBoxForFrame(glm::mat4 view, glm::mat4 projection, Camera cam);
+    void drawFrame(glm::mat4 view, glm::mat4 projection, Camera cam, glm::vec3 view_pos, std::vector<DirLight> dl,int numlamp, Global global, Material mater,int typeMapping, int shaderType, GLuint A, float B, GLuint C);
     void drawLine(glm::vec3 color, glm::mat4 view, glm::mat4 projection, glm::vec3 light_pos, glm::vec3 view_pos, glm::vec2 type_);
     void drawFaceLine(glm::vec3 color, glm::mat4 view, glm::mat4 projection, glm::vec3 light_pos, glm::vec3 view_pos, glm::vec2 type_);
     void set_position(glm::vec3 pos)
@@ -238,7 +268,7 @@ struct Mesh
     bool update_flag = true;
     Camera camera;
 
-
+    
     glm::mat4 projection = {
     1,0,0,0,
     0,1,0,0,
@@ -254,7 +284,9 @@ struct Mesh
 };
 
 Mesh LoadOBJ(const char* path);
+Mesh ReverseLoadOBJ(const char* path);
 void ReadOBJ(const char* path, Mesh& mesh, MinMax& m, LengthMinMax& lm);
+void ReverseReadOBJ(const char* path, Mesh& mesh, MinMax& m, LengthMinMax& lm);
 Mesh CalculateMesh(Mesh& mesh, MinMax& m, LengthMinMax& lm);
 Mesh CreatePlane(int stacks, int slices);
 Mesh CreateCube(int stacks, int slices);

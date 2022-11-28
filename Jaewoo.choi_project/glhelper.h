@@ -23,7 +23,7 @@ the OpenGL application by calling initalization functions associated with
 objects participating in the application.>
 Language: <c++>
 Platform: <Visual studio 2019, OpenGL 4.5, Window 64bit>
-Project: <jaewoo.choi_CS300_2>
+Project: <jaewoo.choi_CS300_3>
 Author: <Jaewoo Choi, jaewoo.choi, 55532>, Original author <pghali>
 Creation date: 04/11/2022
 End Header --------------------------------------------------------*/

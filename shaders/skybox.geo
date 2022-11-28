@@ -19,20 +19,21 @@ layout (location = 2) in vec2 uv;
 
 out vec3 Normal;
 out vec3 FragPos;
-
-
+out vec2 TexCoords;
+out vec3 mpos;
 layout (std140) uniform Matrices
 {
     mat4 projection;
     mat4 view;
     mat4 model;
 };
+uniform int typeMapping;
 
 void main()
 {
-
-    Normal = mat3(transpose(inverse(model))) * nrm;
+    mpos = pos;
+    gl_Position = projection * view *  model * vec4(pos, 1.0f);
     FragPos = vec3(model * vec4(pos, 1.0f));
-    gl_Position = projection * view * vec4(FragPos, 1.0f);
+    Normal = mat3(transpose(inverse(model))) * nrm;
     
 }

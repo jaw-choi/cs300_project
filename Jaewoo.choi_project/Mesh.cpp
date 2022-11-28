@@ -11,7 +11,7 @@ appropriate shaders; and pass uniform variables from the client to the
 program object.>
 Language: <c++>
 Platform: <Visual studio 2019, OpenGL 4.5, Window 64 bit>
-Project: <jaewoo.choi_CS300_2>
+Project: <jaewoo.choi_CS300_3>
 Author: <Jaewoo Choi, jaewoo.choi, 55532>, LoadShaders()some function from file of the professor
 Creation date: 04/11/2022
 End Header --------------------------------------------------------*/
@@ -492,19 +492,15 @@ void Mesh::setup_shdrpgm(std::string shader)
     }
 }
 
-void Mesh::init(const char* vertex_file_path, const char* fragment_file_path, GLuint& A, GLuint& B, GLuint& C, glm::vec3 Pos, glm::vec3 Scale, glm::vec3 Rotate, int numlamp)
+void Mesh::init(const char* vertex_file_path, const char* fragment_file_path, glm::vec3 Pos, glm::vec3 Scale, glm::vec3 Rotate, int numlamp)
 {
-    camera = { { 0.f, 0.f, 10.0f } };
+
     position = Pos;
     scale = Scale;
     rotation = Rotate;
+    stbi_set_flip_vertically_on_load(true);
+    LoadShaders(vertex_file_path, fragment_file_path);
 
-    if (vertex_file_path == "../shaders/PhongShading.vert")
-        A = LoadShaders(vertex_file_path, fragment_file_path);
-    if (vertex_file_path == "../shaders/PhongLighting.vert")
-        B = LoadShaders(vertex_file_path, fragment_file_path);
-    if (vertex_file_path == "../shaders/lightBlinn.vert")
-        C = LoadShaders(vertex_file_path, fragment_file_path);
 
     glUseProgram(ProgramID);
     //setTexture();
@@ -512,8 +508,8 @@ void Mesh::init(const char* vertex_file_path, const char* fragment_file_path, GL
 
     glUniform1i(glGetUniformLocation(ProgramID, "NUMBER_OF_POINT_LIGHTS"), numlamp);
 
-    glUniform1i(glGetUniformLocation(ProgramID, "material.diffuse"), 0);
-    glUniform1i(glGetUniformLocation(ProgramID, "material.specular"), 1);
+
+
     //glUniform1i(glGetUniformLocation(renderProg.GetHandle(), "material.emissive"), 2);
 
     //modelLoc = glGetUniformLocation(renderProg.GetHandle(), "model");
@@ -531,16 +527,86 @@ void Mesh::init(const char* vertex_file_path, const char* fragment_file_path, GL
     glGetActiveUniformBlockiv(ProgramID, MatricesLOC, GL_UNIFORM_BLOCK_DATA_SIZE, &blockSize);
 
     SendVertexData();
-    SendVertexDataForLine();
-    SendVertexDataForFaceLine();
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+    //SendVertexDataForLine();
+    //SendVertexDataForFaceLine();
+
+
+    //glGenRenderbuffers(1, &DepthBuffer);
+    //glBindRenderbuffer(GL_RENDERBUFFER, DepthBuffer);
+    //glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, 1024, 768);
+    //glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER,  DepthBuffer);
+
+    //glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, cubemapTexture[0], 0);//TODO
+
+    //glBindFramebuffer(GL_FRAMEBUFFER, FBO);
 
     /*  Initially drawing using filled mode */
 
     /*  Hidden surface removal */
+
+    //glDepthMask(GL_FALSE);
+}
+
+
+void Mesh::initSkyBox(const char* vertex_file_path, const char* fragment_file_path, const char* geometry_file_path, glm::vec3 Pos, glm::vec3 Scale, glm::vec3 Rotate)
+{
+    //init Frame buffer
+
+    position = Pos;
+    scale = Scale;
+    rotation = Rotate;
+
+    stbi_set_flip_vertically_on_load(true);
+
+    SkyProgramID = LoadShaders(vertex_file_path, fragment_file_path);
+    glUseProgram(SkyProgramID);
+
+    cubemapTextureEnvironment.resize(faces.size());
+
+    int width, height, nrComponents;
+    for (unsigned int i = 0; i < faces.size(); i++)
+    {
+        glGenTextures(1, &cubemapTextureEnvironment[i]);
+        glBindTexture(GL_TEXTURE_2D, cubemapTextureEnvironment[i]);
+        unsigned char* data = stbi_load(faces[i].c_str(), &width, &height, &nrComponents, 0);//window width,height 1600, 1000
+        if (data)
+        {
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+            stbi_image_free(data);
+        }
+        else
+        {
+            std::cout << "Cubemap texture failed to load at path: " << faces[i] << std::endl;
+            stbi_image_free(data);
+        }
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+
+        //glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, textureID[i], 0);
+    }
+    GLint a = glGetUniformLocation(SkyProgramID, "material.right");
+    glUniform1i(a, 0);
+    glUniform1i(glGetUniformLocation(SkyProgramID, "material.left"), 1);
+    glUniform1i(glGetUniformLocation(SkyProgramID, "material.top"), 2);
+    glUniform1i(glGetUniformLocation(SkyProgramID, "material.bottom"), 3);
+    glUniform1i(glGetUniformLocation(SkyProgramID, "material.front"), 4);
+    glUniform1i(glGetUniformLocation(SkyProgramID, "material.back"), 5);
+
+    MatricesLOC = glGetUniformBlockIndex(SkyProgramID, "Matrices");
+    glUniformBlockBinding(SkyProgramID, MatricesLOC, 0);//
+    glGetActiveUniformBlockiv(SkyProgramID, MatricesLOC, GL_UNIFORM_BLOCK_DATA_SIZE, &blockSize);
+
+    SendVertexData();
+
+
     glEnable(GL_DEPTH_TEST);
     glDepthFunc(GL_LESS);
+
 }
+
 
 void Mesh::initLamp(const char* vertex_file_path, const char* fragment_file_path, glm::vec3 Pos, glm::vec3 Scale, glm::vec3 Rotate)
 {
@@ -611,8 +677,6 @@ void Mesh::initLine(const char* vertex_file_path, const char* fragment_file_path
     glDepthFunc(GL_LESS);
 
 }
-
-
 
 GLuint Mesh::LoadShaders(const char* vertex_file_path, const char* fragment_file_path)
 {
@@ -717,18 +781,125 @@ GLuint Mesh::LoadShaders(const char* vertex_file_path, const char* fragment_file
     return ProgramID;
 }
 
+GLuint Mesh::LoadShaders(const char* vertex_file_path, const char* fragment_file_path, const char* geometry_file_path)
+{
+    // Create the shaders
+    GLuint VertexShaderID = glCreateShader(GL_VERTEX_SHADER);
+    GLuint FragmentShaderID = glCreateShader(GL_FRAGMENT_SHADER);
 
-void Mesh::draw(glm::mat4 view, glm::mat4 projection, glm::vec3 light_pos, glm::vec3 view_pos, std::vector<DirLight> dl, int numlamp, Global global, Material mater)
+    // Read the Vertex Shader code from the file
+    std::string VertexShaderCode;
+    std::ifstream VertexShaderStream(vertex_file_path, std::ios::in);
+    if (VertexShaderStream.is_open()) {
+        std::string Line;
+        while (getline(VertexShaderStream, Line))
+            VertexShaderCode += "\n" + Line;
+        VertexShaderStream.close();
+    }
+    else {
+        printf("Impossible to open %s. Are you in the right directory ? Don't forget to read the FAQ !\n", vertex_file_path);
+        //getchar();
+        return 0;
+    }
+
+    // Read the Fragment Shader code from the file
+    std::string FragmentShaderCode;
+    std::ifstream FragmentShaderStream(fragment_file_path, std::ios::in);
+    if (FragmentShaderStream.is_open()) {
+        std::string Line;
+        while (getline(FragmentShaderStream, Line))
+            FragmentShaderCode += "\n" + Line;
+        FragmentShaderStream.close();
+    }
+
+    GLint Result = GL_FALSE;
+    int InfoLogLength;
+
+
+    // Compile Vertex Shader
+    //printf("Compiling shader : %s\n", vertex_file_path);
+    char const* VertexSourcePointer = VertexShaderCode.c_str();
+    glShaderSource(VertexShaderID, 1, &VertexSourcePointer, nullptr);
+    glCompileShader(VertexShaderID);
+
+    // Check Vertex Shader
+    glGetShaderiv(VertexShaderID, GL_COMPILE_STATUS, &Result);
+    glGetShaderiv(VertexShaderID, GL_INFO_LOG_LENGTH, &InfoLogLength);
+    int InfoLogLengthPlusOne = 0;
+    if (InfoLogLength > 0) {
+        InfoLogLengthPlusOne = InfoLogLength + 1;
+        std::vector<char> VertexShaderErrorMessage(InfoLogLengthPlusOne);
+        glGetShaderInfoLog(VertexShaderID, InfoLogLength, nullptr, &VertexShaderErrorMessage[0]);
+        printf("%s\n", &VertexShaderErrorMessage[0]);
+    }
+
+
+    // Compile Fragment Shader
+    //printf("Compiling shader : %s\n", fragment_file_path);
+    char const* FragmentSourcePointer = FragmentShaderCode.c_str();
+    glShaderSource(FragmentShaderID, 1, &FragmentSourcePointer, nullptr);
+    glCompileShader(FragmentShaderID);
+
+    // Check Fragment Shader
+    glGetShaderiv(FragmentShaderID, GL_COMPILE_STATUS, &Result);
+    glGetShaderiv(FragmentShaderID, GL_INFO_LOG_LENGTH, &InfoLogLength);
+    if (InfoLogLength > 0) {
+        InfoLogLengthPlusOne = InfoLogLength + 1;
+        std::vector<char> FragmentShaderErrorMessage(InfoLogLengthPlusOne);
+        glGetShaderInfoLog(FragmentShaderID, InfoLogLength, nullptr, &FragmentShaderErrorMessage[0]);
+        printf("%s\n", &FragmentShaderErrorMessage[0]);
+    }
+
+
+    // Link the program
+    //printf("Linking program\n");
+    ProgramID = glCreateProgram();
+    glAttachShader(ProgramID, VertexShaderID);
+    glAttachShader(ProgramID, FragmentShaderID);
+    glLinkProgram(ProgramID);
+
+    // Check the program
+    glGetProgramiv(ProgramID, GL_LINK_STATUS, &Result);
+    glGetProgramiv(ProgramID, GL_INFO_LOG_LENGTH, &InfoLogLength);
+    if (InfoLogLength > 0) {
+        InfoLogLengthPlusOne = InfoLogLength + 1;
+        std::vector<char> ProgramErrorMessage(InfoLogLengthPlusOne);
+        glGetProgramInfoLog(ProgramID, InfoLogLength, nullptr, &ProgramErrorMessage[0]);
+        printf("%s\n", &ProgramErrorMessage[0]);
+    }
+
+    std::vector<std::pair<GLenum, std::string>> shdr_files;
+    shdr_files.push_back(std::make_pair(GL_VERTEX_SHADER, vertex_file_path));
+    shdr_files.push_back(std::make_pair(GL_FRAGMENT_SHADER, fragment_file_path));
+    renderProg.CompileLinkValidate(shdr_files);
+    if (GL_FALSE == renderProg.IsLinked())
+    {
+        std::cout << "Unable to compile/link/validate shader programs" << "\n";
+        std::cout << renderProg.GetLog() << std::endl;
+        std::exit(EXIT_FAILURE);
+    }
+
+
+
+    return ProgramID;
+}
+
+void Mesh::draw(glm::mat4 view, glm::mat4 projection, glm::vec3 light_pos, glm::vec3 view_pos, std::vector<DirLight> dl, int numlamp,
+    Global global, Material mater, std::vector<GLuint> cubemapTexture, bool reflect, bool refract, int indexFresnel,
+    std::vector<float> refractiveIndex, std::vector<float> fresnelC, float FresnelPower)
 {
     glUseProgram(ProgramID);
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
+    
+    glDepthMask(GL_TRUE);
     glm::mat4 model = {
     1,0,0,0,
     0,1,0,0,
     0,0,1,0,
     0,0,0,1
     };
-
+    
     model = glm::translate(model, position);
     model = glm::rotate(model, rotation.x, glm::vec3(1.0f, 0.0f, 0.0f));
     model = glm::rotate(model, rotation.y, glm::vec3(0.0f, 1.0f, 0.0f));
@@ -747,16 +918,18 @@ void Mesh::draw(glm::mat4 view, glm::mat4 projection, glm::vec3 light_pos, glm::
     glBindVertexArray(VAO);
 
     glUniform4fv(colorLoc, 1, ValuePtr(glm::vec3{ 1.f,1.f,1.f }));//
-    glm::vec3 attenuation = { 1.f,0.220f,0.2f };
-    glm::vec3 fogColor = { 0.f,1.f,1.f };
 
-    GLfloat fogMin = 0.1f;
-    GLfloat fogMax = 20.f;
-    //glUniform3fv(LightLoc, 1, ValuePtr(light_pos));//
-    glUniform3fv(ViewPosLoc, 1, ValuePtr(view_pos));//
+
     glUniform1i(glGetUniformLocation(ProgramID, "NUMBER_OF_POINT_LIGHTS"), numlamp);
+    glUniform1f(glGetUniformLocation(ProgramID, "Reflection_bool"), reflect);
+    glUniform1f(glGetUniformLocation(ProgramID, "Refraction_bool"), refract);
+    glUniform3f(glGetUniformLocation(ProgramID, "viewPos"), view_pos.x, view_pos.y, view_pos.z);
 
 
+    glUniform1f(glGetUniformLocation(ProgramID, "refractiveIndex"), refractiveIndex[indexFresnel]);
+    glUniform1f(glGetUniformLocation(ProgramID, "fresnelC"), fresnelC[indexFresnel]);
+    glUniform1f(glGetUniformLocation(ProgramID, "FresnelPower"), FresnelPower);
+    
     glUniform3f(glGetUniformLocation(ProgramID, "attenuation"), global.attenuation.x, global.attenuation.y, global.attenuation.z);
     glUniform3f(glGetUniformLocation(ProgramID, "fogColor"), global.fogColor.x, global.fogColor.y, global.fogColor.z);
     glUniform3f(glGetUniformLocation(ProgramID, "globalAmbient"), global.ambient.x, global.ambient.y, global.ambient.z);
@@ -772,71 +945,40 @@ void Mesh::draw(glm::mat4 view, glm::mat4 projection, glm::vec3 light_pos, glm::
     glUniform3f(glGetUniformLocation(ProgramID, "material.specular"), mater.specular.x, mater.specular.y, mater.specular.z);
     glUniform3f(glGetUniformLocation(ProgramID, "material.ambient"), mater.ambient.x, mater.ambient.y, mater.ambient.z);
     glUniform3f(glGetUniformLocation(ProgramID, "material.emissive"), mater.emissive.x, mater.emissive.y, mater.emissive.z);
-    char buf[3] = {};
-    std::string tmpA = "pointLights[";
-    std::string tmpB;
-    std::string pos = tmpB + "].position";
-    std::string dir = tmpB + "].direction";
-    std::string cut = tmpB + "].cutOff";
-    std::string out = tmpB + "].outerCutOff";
-    std::string amb = tmpB + "].ambient";
-    std::string dif = tmpB + "].diffuse";
-    std::string spe = tmpB + "].specular";
-    std::string con = tmpB + "].constant";
-    std::string lin = tmpB + "].linear";
-    std::string qua = tmpB + "].quadratic";
-    std::string typ = tmpB + "].type";
-    std::string inA = tmpB + "].innerAngle";
-    std::string outA = tmpB + "].outerAngle";
-    std::string fall = tmpB + "].falloff";
 
-    for (int i = 0; i < numlamp; i++)
-    {
-        _itoa(i, buf, 10);
-        tmpB = tmpA + buf;
-        pos = tmpB + "].position";
-        dir = tmpB + "].direction";
-        amb = tmpB + "].ambient";
-        dif = tmpB + "].diffuse";
-        spe = tmpB + "].specular";
-        con = tmpB + "].attenuation";
-        cut = tmpB + "].cutOff";
-        out = tmpB + "].outerCutOff";
-        typ = tmpB + "].type";
-        inA = tmpB + "].innerAngle";
-        outA = tmpB + "].outerAngle";
-        fall = tmpB + "].falloff";
+    //TODO
+   GLint a = glGetUniformLocation(ProgramID, "material.right");
+   glUniform1i(a, 0);
+
+   glActiveTexture(GL_TEXTURE0);
+   glBindTexture(GL_TEXTURE_2D, cubemapTexture[0]);
+   glUniform1i(glGetUniformLocation(ProgramID, "material.left"), 1);
+   glActiveTexture(GL_TEXTURE1);
+   glBindTexture(GL_TEXTURE_2D, cubemapTexture[1]);
+   glUniform1i(glGetUniformLocation(ProgramID, "material.top"), 2);
+   glActiveTexture(GL_TEXTURE2);
+   glBindTexture(GL_TEXTURE_2D, cubemapTexture[2]);
+   glUniform1i(glGetUniformLocation(ProgramID, "material.bottom"), 3);
+   glActiveTexture(GL_TEXTURE3);
+   glBindTexture(GL_TEXTURE_2D, cubemapTexture[3]);
+   glUniform1i(glGetUniformLocation(ProgramID, "material.front"), 4);
+   glActiveTexture(GL_TEXTURE4);
+   glBindTexture(GL_TEXTURE_2D, cubemapTexture[4]);
+   glUniform1i(glGetUniformLocation(ProgramID, "material.back"), 5);
+   glActiveTexture(GL_TEXTURE5);
+   glBindTexture(GL_TEXTURE_2D, cubemapTexture[5]);
 
 
-        auto test = glGetUniformLocation(ProgramID, dif.c_str());
-        glUniform3f(glGetUniformLocation(ProgramID, pos.c_str()), dl[i].position.x, dl[i].position.y, dl[i].position.z);
-        glUniform3f(glGetUniformLocation(ProgramID, dir.c_str()), dl[i].direction.x, dl[i].direction.y, dl[i].direction.z);
-        glUniform3f(glGetUniformLocation(ProgramID, amb.c_str()), dl[i].ambient.x, dl[i].ambient.y, dl[i].ambient.z);
-        glUniform3f(glGetUniformLocation(ProgramID, dif.c_str()), dl[i].diffuse.x, dl[i].diffuse.y, dl[i].diffuse.z);
-        glUniform3f(glGetUniformLocation(ProgramID, spe.c_str()), dl[i].specular.x, dl[i].specular.y, dl[i].specular.z);
-        glUniform1f(glGetUniformLocation(ProgramID, cut.c_str()), dl[i].cutoff);
-        glUniform1f(glGetUniformLocation(ProgramID, out.c_str()), dl[i].outerCutOff);
-        glUniform1i(glGetUniformLocation(ProgramID, typ.c_str()), dl[i].type);
-        glUniform1f(glGetUniformLocation(ProgramID, inA.c_str()), dl[i].innerAngle);
-        glUniform1f(glGetUniformLocation(ProgramID, outA.c_str()), dl[i].outerAngle);
-        glUniform1f(glGetUniformLocation(ProgramID, fall.c_str()), dl[i].falloff);
-    }
-
-    // Bind diffuse map
-    glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, diffuseMap);
-    // Bind specular map
-    glActiveTexture(GL_TEXTURE1);
-    glBindTexture(GL_TEXTURE_2D, specularMap);
 
     glDrawElements(GL_TRIANGLES, numIndices, GL_UNSIGNED_INT, nullptr);
 
     glBindVertexArray(0);
 }
 
-
-void Mesh::drawLight(glm::mat4 view, glm::mat4 projection, glm::vec3 light_pos, glm::vec3 view_pos, std::vector<DirLight> dl, int numlamp, Global global, Material mater, int typeMapping, int shaderType, GLuint A, GLuint B, GLuint C)
+void Mesh::drawLight(glm::mat4 view, glm::mat4 projection, glm::vec3 light_pos, glm::vec3 view_pos, std::vector<DirLight> dl, int numlamp, Global global, Material mater, int typeMapping, int shaderType, GLuint A, float B, GLuint C)
 {
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    glEnable(GL_DEPTH_TEST);
     if (shaderType == 0)
         ProgramID = A;
     else if (shaderType == 1)
@@ -846,6 +988,7 @@ void Mesh::drawLight(glm::mat4 view, glm::mat4 projection, glm::vec3 light_pos, 
 
     glUseProgram(ProgramID);
 
+
     glm::mat4 model = {
     1,0,0,0,
     0,1,0,0,
@@ -858,6 +1001,10 @@ void Mesh::drawLight(glm::mat4 view, glm::mat4 projection, glm::vec3 light_pos, 
     model = glm::rotate(model, rotation.y, glm::vec3(0.0f, 1.0f, 0.0f));
     model = glm::rotate(model, rotation.z, glm::vec3(0.0f, 0.0f, 1.0f));
     model = glm::scale(model, scale);
+    glBufferSubData(GL_UNIFORM_BUFFER, sizeof(glm::mat4), sizeof(glm::mat4), glm::value_ptr(view));
+
+
+
 
     glBindBuffer(GL_UNIFORM_BUFFER, UBO);
 
@@ -878,24 +1025,22 @@ void Mesh::drawLight(glm::mat4 view, glm::mat4 projection, glm::vec3 light_pos, 
     GLfloat fogMax = 20.f;
     //glUniform3fv(LightLoc, 1, ValuePtr(light_pos));//
     glUniform3fv(ViewPosLoc, 1, ValuePtr(view_pos));//
+
+
+
     glUniform1i(glGetUniformLocation(ProgramID, "NUMBER_OF_POINT_LIGHTS"), numlamp);
     glUniform1i(glGetUniformLocation(ProgramID, "typeMapping"), typeMapping);
-
     glUniform3f(glGetUniformLocation(ProgramID, "attenuation"), global.attenuation.x, global.attenuation.y, global.attenuation.z);
     glUniform3f(glGetUniformLocation(ProgramID, "fogColor"), global.fogColor.x, global.fogColor.y, global.fogColor.z);
     glUniform3f(glGetUniformLocation(ProgramID, "globalAmbient"), global.ambient.x, global.ambient.y, global.ambient.z);
     glUniform1f(glGetUniformLocation(ProgramID, "fogMin"), global.fogMin);
     glUniform1f(glGetUniformLocation(ProgramID, "fogMax"), global.fogMax);
-
-    //glUniform3f(glGetUniformLocation(renderProg.GetHandle(), "material.diffuse"), mater.ambient.x, mater.ambient.y, mater.ambient.z);
-    //glUniform3f(glGetUniformLocation(renderProg.GetHandle(), "material.specular"), mater.specular.x, mater.specular.y, mater.specular.z);
     glUniform1f(glGetUniformLocation(ProgramID, "material.shininess"), 32.f);
-    //glUniform3f(glGetUniformLocation(renderProg.GetHandle(), "material.emissive"), mater.ambient.x, mater.ambient.y, mater.ambient.z);
-
     glUniform3f(glGetUniformLocation(ProgramID, "material.diffuse"), mater.diffuse.x, mater.diffuse.y, mater.diffuse.z);
     glUniform3f(glGetUniformLocation(ProgramID, "material.specular"), mater.specular.x, mater.specular.y, mater.specular.z);
     glUniform3f(glGetUniformLocation(ProgramID, "material.ambient"), mater.ambient.x, mater.ambient.y, mater.ambient.z);
     glUniform3f(glGetUniformLocation(ProgramID, "material.emissive"), mater.emissive.x, mater.emissive.y, mater.emissive.z);
+
     char buf[3] = {};
     std::string tmpA = "pointLights[";
     std::string tmpB;
@@ -945,31 +1090,188 @@ void Mesh::drawLight(glm::mat4 view, glm::mat4 projection, glm::vec3 light_pos, 
         glUniform1f(glGetUniformLocation(ProgramID, outA.c_str()), dl[i].outerAngle);
         glUniform1f(glGetUniformLocation(ProgramID, fall.c_str()), dl[i].falloff);
     }
-    //if (typeMapping == 0)
+
+
+
+    glDrawElements(GL_TRIANGLES, numIndices, GL_UNSIGNED_INT, nullptr);
+    //glDepthFunc(GL_LESS);
+
+    glBindVertexArray(0);
+    //glBindBuffer(GL_DRAW_FRAMEBUFFER, 0);
+    //glDrawBuffer(GL_BACK_LEFT);
+}
+
+void Mesh::drawFrame(glm::mat4 view, glm::mat4 projection, Camera cam, glm::vec3 view_pos, std::vector<DirLight> dl, int numlamp, Global global, Material mater, int typeMapping, int shaderType, GLuint A, float B, GLuint C)
+{
+    //glEnable(GL_DEPTH_TEST);
+    //
+
+    //glm::mat4 model = glm::mat4(1.0f);
+    //glm::mat4 _view = glm::mat4(1.0f);
+    //glm::mat4 _projection = glm::mat4(1.0f);
+    //glm::mat4 tmp = glm::mat4(1.0f);
+
+    ////TODO
+    //glBindVertexArray(VAO);
+    //glm::mat4 skyBoxTransform[6];
+    //skyBoxTransform[0] = (glm::perspective(glm::radians(90.0f), 1.f, 0.1f, 100.f) * glm::lookAt(glm::vec3(0), glm::vec3(1.0, 0.0, 0.0), glm::vec3(0.0, 1.0, 0.0)));//right
+    //skyBoxTransform[1] = (glm::perspective(glm::radians(90.0f), 1.f, 0.1f, 100.f) * glm::lookAt(glm::vec3(0), glm::vec3(-1.0, 0.0, 0.0), glm::vec3(0.0, 1.0, 0.0)));//left
+    //skyBoxTransform[2] = (glm::perspective(glm::radians(90.0f), 1.f, 0.1f, 100.f) * glm::lookAt(glm::vec3(0), glm::vec3(0.0, -1.0, 0.0), glm::vec3(0.0, 0.0, 1.0)));//bottom
+    //skyBoxTransform[3] = (glm::perspective(glm::radians(90.0f), 1.f, 0.1f, 100.f) * glm::lookAt(glm::vec3(0), glm::vec3(0.0, 1.0, 0.0), glm::vec3(0.0, 0.0, -1.0)));//top
+    //skyBoxTransform[4] = (glm::perspective(glm::radians(90.0f), 1.f, 0.1f, 100.f) * glm::lookAt(glm::vec3(0), glm::vec3(0.0, 0.0, -1.0), glm::vec3(0.0, 1.0, 0.0)));//back
+    //skyBoxTransform[5] = (glm::perspective(glm::radians(90.0f), 1.f, 0.1f, 100.f) * glm::lookAt(glm::vec3(0), glm::vec3(0.0, 0.0, 1.0), glm::vec3(0.0, 1.0, 0.0)));//front
+    //for (int i = 0; i < 6; i++)
     //{
-    //    for (int i = 0; i < numVertices; i++)
+    //    glBindFramebuffer(GL_FRAMEBUFFER, FBO);
+    //    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, cubemapTexture[i], 0);
+    //    glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
+    //    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    //    
+
+    //    model = glm::mat4(1.0f);
+    //    
+
+    //    cam.Update(0);
+    //    if (i == 0)
+    //        cam.yaw += 90.0f;
+    //    else if (i == 1)
+    //        cam.yaw += 90.0f;
+    //    else if (i == 2)
+    //        cam.yaw += 90.0f;
+    //    else if (i == 3)
+    //        cam.pitch += 90.0f;
+    //    else if (i == 4)
+    //        cam.pitch += 180.0f;
+    //    else if (i == 5)
     //    {
-    //        vertexBuffer[i].uv = uvPlanar[i];
+    //        cam.pitch += 90.0f;
+    //        cam.yaw += 90.0f;
+    //        cam.Update(0);
     //    }
+    //    _projection = skyBoxTransform[i];
+    //    _view = cam.GetViewMatrix();
+
+    //    tmp = glm::mat4(1);
+
+    //    glBindBuffer(GL_UNIFORM_BUFFER, UBO);
+
+    //    glBufferSubData(GL_UNIFORM_BUFFER, sizeof(glm::mat4), sizeof(glm::mat4), &tmp[0].x);
+    //    glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(glm::mat4), glm::value_ptr(_projection));
+    //    glBufferSubData(GL_UNIFORM_BUFFER, 2 * sizeof(glm::mat4), sizeof(glm::mat4), glm::value_ptr(model));
+
+    //    glBindBufferBase(GL_UNIFORM_BUFFER, MatricesLOC, UBO);
+
+    //    drawSkyBoxForFrame();
+    //    drawLampForFrame(numlamp,dl);
+
+    //   // glBindFramebuffer(GL_FRAMEBUFFER, 0);
     //}
-    /*  Send vertex attributes to shaders */
 
-        //glEnableVertexAttribArray(vLayout[2].location);
-        //glVertexAttribPointer(vLayout[2].location, vLayout[2].size, vLayout[2].type, vLayout[2].normalized, vertexSize, (void*)(uintptr_t)vLayout[2].offset);
+}
+
+void Mesh::drawSkyBox(glm::mat4 view, glm::mat4 projection, Camera cam)
+{
+    // second render pass: draw as normal
+    // ----------------------------------
+    //glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
+    //glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    //glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+    glUseProgram(SkyProgramID);
 
 
+    glm::mat4 model = {
+       1,0,0,0,
+       0,1,0,0,
+       0,0,1,0,
+       0,0,0,1
+    };
+
+    model = glm::translate(model, position);
+    model = glm::rotate(model, rotation.x, glm::vec3(1.0f, 0.0f, 0.0f));
+    model = glm::rotate(model, rotation.y, glm::vec3(0.0f, 1.0f, 0.0f));
+    model = glm::rotate(model, rotation.z, glm::vec3(0.0f, 0.0f, 1.0f));
+    model = glm::scale(model, { 1.f,1.f,1.f });
 
 
-    // Bind diffuse map
-    glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, diffuseMap);
-    // Bind specular map
-    glActiveTexture(GL_TEXTURE1);
-    glBindTexture(GL_TEXTURE_2D, specularMap);
+    // cubes
+    
+    glBindVertexArray(VAO);
+    for (int i = 0; i < faces.size(); i++)
+    {
+        glActiveTexture(GL_TEXTURE0 + i);
+        glBindTexture(GL_TEXTURE_2D, cubemapTextureEnvironment[i]);
+        //glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, cubemapTexture[i], 0);
+    }
 
+
+    glBindBuffer(GL_UNIFORM_BUFFER, UBO);
+
+    glm::mat4 tmp = glm::mat4(glm::mat3(view));
+    glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(glm::mat4), glm::value_ptr(projection));
+    glBufferSubData(GL_UNIFORM_BUFFER, sizeof(glm::mat4), sizeof(glm::mat4), &tmp[0].x);
+    glBufferSubData(GL_UNIFORM_BUFFER, 2 * sizeof(glm::mat4), sizeof(glm::mat4), glm::value_ptr(model));
+
+    glBindBufferBase(GL_UNIFORM_BUFFER, MatricesLOC, UBO);
     glDrawElements(GL_TRIANGLES, numIndices, GL_UNSIGNED_INT, nullptr);
 
     glBindVertexArray(0);
+
+
+
+}
+
+void Mesh::drawSkyBoxForFrame(glm::mat4 view, glm::mat4 projection, Camera cam)
+{
+    // second render pass: draw as normal
+    // ----------------------------------
+    //glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
+    //glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    //glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    glDisable(GL_DEPTH_TEST);
+    glUseProgram(SkyProgramID);
+
+
+    glm::mat4 model = {
+       1,0,0,0,
+       0,1,0,0,
+       0,0,1,0,
+       0,0,0,1
+    };
+
+    model = glm::translate(model, position);
+    model = glm::rotate(model, rotation.x, glm::vec3(1.0f, 0.0f, 0.0f));
+    model = glm::rotate(model, rotation.y, glm::vec3(0.0f, 1.0f, 0.0f));
+    model = glm::rotate(model, rotation.z, glm::vec3(0.0f, 0.0f, 1.0f));
+    model = glm::scale(model, { 1.f,1.f,1.f });
+
+
+    // cubes
+
+    glBindVertexArray(VAO);
+    for (int i = 0; i < faces.size(); i++)
+    {
+        glActiveTexture(GL_TEXTURE0 + i);
+        glBindTexture(GL_TEXTURE_2D, cubemapTextureEnvironment[i]);
+        //glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, cubemapTexture[i], 0);
+    }
+
+
+    glBindBuffer(GL_UNIFORM_BUFFER, UBO);
+
+    glm::mat4 tmp = glm::mat4(glm::mat3(view));
+    glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(glm::mat4), glm::value_ptr(projection));
+    glBufferSubData(GL_UNIFORM_BUFFER, sizeof(glm::mat4), sizeof(glm::mat4), &tmp[0].x);
+    glBufferSubData(GL_UNIFORM_BUFFER, 2 * sizeof(glm::mat4), sizeof(glm::mat4), glm::value_ptr(model));
+
+    glBindBufferBase(GL_UNIFORM_BUFFER, MatricesLOC, UBO);
+    glDrawElements(GL_TRIANGLES, numIndices, GL_UNSIGNED_INT, nullptr);
+
+    glBindVertexArray(0);
+
+    glEnable(GL_DEPTH_TEST);
+
+
 
 }
 
@@ -1045,6 +1347,8 @@ void Mesh::drawFaceLine(glm::vec3 color, glm::mat4 view, glm::mat4 projection, g
 
 void Mesh::drawLamp(glm::mat4 view, glm::mat4 projection, int numberLamp, std::vector<DirLight> dl, std::vector<lampSet> lampSetting)
 {
+    //glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    //glDisable(GL_DEPTH_TEST);
     glUseProgram(renderProg.GetHandle());
 
     glBindVertexArray(VAO);
@@ -1075,6 +1379,39 @@ void Mesh::drawLamp(glm::mat4 view, glm::mat4 projection, int numberLamp, std::v
     }
     glBindVertexArray(0);
 
+}
+
+void Mesh::drawLampForFrame(int numberLamp, std::vector<DirLight> dl)
+{
+    //glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    glUseProgram(renderProg.GetHandle());
+
+    glBindVertexArray(VAO);
+
+
+    for (int i = 0; i < numberLamp; i++)
+    {
+        glm::mat4 model = {
+       1,0,0,0,
+       0,1,0,0,
+       0,0,1,0,
+       0,0,0,1
+        };
+        glm::vec3 Pos = { dl[i].position.x,dl[i].position.y,dl[i].position.z };
+        model = glm::translate(model, Pos);
+        model = glm::rotate(model, rotation.x, glm::vec3(1.0f, 0.0f, 0.0f));
+        model = glm::rotate(model, rotation.y, glm::vec3(0.0f, 1.0f, 0.0f));
+        model = glm::rotate(model, rotation.z, glm::vec3(0.0f, 0.0f, 1.0f));
+        model = glm::scale(model, { 0.2f,0.2f ,0.2f });
+
+        //glUniform4f(glGetUniformLocation(renderProg.GetHandle(), "diffuse"), lampSetting[i].Diffuse.x, lampSetting[i].Diffuse.y, lampSetting[i].Diffuse.z, lampSetting[i].Diffuse.w);
+
+        glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
+    }
+    glDrawElements(GL_TRIANGLES, numIndices, GL_UNSIGNED_INT, nullptr);
+
+    glBindVertexArray(0);
+    glDisable(GL_DEPTH_TEST);
 }
 
 
@@ -1190,64 +1527,18 @@ Mesh LoadOBJ(const char* path)
 
     ReadOBJ(path, mesh, m, lm);
     mesh = CalculateMesh(mesh, m, lm);
-    //int numberOfVer = mesh.numVertices;
-    //mesh.uvPlanar.reserve(numberOfVer);
-    //mesh.uvCyndrical.reserve(numberOfVer);
-    //mesh.uvSpherical.reserve(numberOfVer);
-    //mesh.uvcube.reserve(numberOfVer);
-    //for (int i = 0; i < numberOfVer; i++)
-    //{
-    //    glm::vec3 pos = mesh.vertexBuffer[i].pos;
+
+    return mesh;
+}
+Mesh ReverseLoadOBJ(const char* path)
+{
+    Mesh mesh;
+    MinMax m;
+    LengthMinMax lm;
 
 
-    //    mesh.uvPlanar.push_back(glm::vec2((pos.x + 1.f) / 2.f, (pos.z + 1.f) / 2.f));
-
-
-    //    float r = sqrt((pos.x * pos.x) + (pos.z * pos.z));
-    //    float theta = atan(pos.z / pos.x) * (360.f / TWO_PI) + 180.f;
-    //    mesh.uvCyndrical.push_back( glm::vec2(theta / 360.f, (pos.y + 1.f) / 2.f));
-
-
-    //    r = sqrt((pos.x * pos.x) + (pos.y * pos.y) + (pos.z * pos.z));
-    //    theta = atan(pos.z / pos.x) * (360.f / TWO_PI) + 180.f;
-    //    float phi = acos(pos.y / r) * (360.f / TWO_PI);
-    //    mesh.uvSpherical.push_back( glm::vec2(theta / 360.f, 1.f - (phi / 180.f)));
-
-
-    //    glm::vec2 UV;
-    //    glm::vec3 absVector = abs(pos);
-
-    //    if (absVector.x >= absVector.y && absVector.x >= absVector.z)
-    //    {
-    //        if (pos.x < 0.0f)
-    //            UV.x = pos.z / absVector.x;
-    //        else
-    //            UV.x = -pos.z / absVector.x;
-
-    //        UV.y = pos.y / absVector.x;
-    //    }
-    //    else if (absVector.y >= absVector.x && absVector.y >= absVector.z)
-    //    {
-    //        if (pos.y < 0.0f)
-    //            UV.y = pos.z / absVector.y;
-    //        else
-    //            UV.y = -pos.z / absVector.y;
-
-    //        UV.x = pos.x / absVector.y;
-    //    }
-    //    else if (absVector.z >= absVector.x && absVector.z >= absVector.y)
-    //    {
-    //        if (pos.z < 0.0f)
-    //            UV.x = -pos.x / absVector.z;
-    //        else
-    //            UV.x = pos.x / absVector.z;
-
-    //        UV.y = pos.y / absVector.z;
-    //    }
-
-    //    mesh.uvcube.push_back( (UV / 2.f + glm::vec2(1.f, 1.f) / 2.f));
-
-    //}
+    ReverseReadOBJ(path, mesh, m, lm);
+    mesh = CalculateMesh(mesh, m, lm);
 
     return mesh;
 }
@@ -1284,6 +1575,56 @@ void ReadOBJ(const char* path, Mesh& mesh, MinMax& m, LengthMinMax& lm)
         else if (mode == 'f') {
             unsigned int vertexIndex[3];
             sstr >> vertexIndex[0] >> vertexIndex[1] >> vertexIndex[2];
+
+
+            //if (matches != 3) {
+            //    printf("File can't be read by our simple parser : ( Try exporting with other options\n");
+            //    //return false;
+            //}
+            addIndex(mesh, vertexIndex[0] - 1);
+            addIndex(mesh, vertexIndex[1] - 1);
+            addIndex(mesh, vertexIndex[2] - 1);
+
+            // For each vertex of each triangle
+        }
+    }
+    lm.lenX = m.max.x - m.min.x;
+    lm.lenY = m.max.y - m.min.y;
+    lm.lenZ = m.max.z - m.min.z;
+}
+
+void ReverseReadOBJ(const char* path, Mesh& mesh, MinMax& m, LengthMinMax& lm)
+{
+    Vertex v;
+    std::ifstream file{ path };
+    if (!file)
+    {
+        throw std::runtime_error(std::string("ERROR: Unable to open scene file: ") + path);
+    }
+
+    std::string line;
+    char mode;
+
+    while (file) {
+
+        getline(file, line);
+        if (line.empty())
+        {
+            continue;
+        }
+
+        std::istringstream sstr{ line };
+        sstr >> mode;
+        if (mode == 'v')
+        {
+            sstr >> v.pos.x >> v.pos.y >> v.pos.z;
+
+            addVertex(mesh, v);
+            CalculateMinMax(v, m);
+        }
+        else if (mode == 'f') {
+            unsigned int vertexIndex[3];
+            sstr >> vertexIndex[2] >> vertexIndex[1] >> vertexIndex[0];
 
 
             //if (matches != 3) {
@@ -1413,43 +1754,100 @@ Mesh CalculateMesh(Mesh& mesh, MinMax& m, LengthMinMax& lm)
     return mesh;
 }
 
+std::vector<GLuint> Mesh::loadCubemap(std::vector<std::string> faces)
+{
+    std::vector<GLuint> textureID;
+    //glGenFramebuffers(1, &FBO);
+    //glBindFramebuffer(GL_FRAMEBUFFER, FBO);
+
+    textureID.resize(faces.size());
+
+    int width, height, nrComponents;
+    for (unsigned int i = 0; i < faces.size(); i++)
+    {
+        glGenTextures(1, &textureID[i]);
+        glBindTexture(GL_TEXTURE_2D, textureID[i]);
+        unsigned char* data = stbi_load(faces[i].c_str(), &width, &height, &nrComponents, 0);//window width,height 1600, 1000
+        if (data)
+        {
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+            stbi_image_free(data);
+        }
+        else
+        {
+            std::cout << "Cubemap texture failed to load at path: " << faces[i] << std::endl;
+            stbi_image_free(data);
+        }
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+        //glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, textureID[i], 0);
+    }
+
+
+    return textureID;
+}
 void Mesh::setTexture()
 {
+    cubemapTextureEnvironment = loadCubemap(faces);
+    //glGenTextures(1, &diffuseMap);
+    //
+    ////glGenTextures(1, &emissionMap);
 
-    glGenTextures(1, &diffuseMap);
-    glGenTextures(1, &specularMap);
-    //glGenTextures(1, &emissionMap);
-
-    int imageWidth = 0, imageHeight = 0;
+    //int imageWidth = 0, imageHeight = 0, channel = 0;
 
 
-    GLfloat* image;
-    // Diffuse map
-    image = readPPM("../textures/metal_roof_diff_512x512.ppm", imageWidth, imageHeight);
-    //image = stbi_load("../textures/metal_roof_diff_512x512.png", &imageWidth, &imageHeight, &channel, 0);
+    //unsigned char* image;
+    //// Diffuse map
+    ////image = readPPM("../textures/metal_roof_diff_512x512.ppm", imageWidth, imageHeight);
+    //image = stbi_load("../textures/top.jpg", &imageWidth, &imageHeight, &channel, 0);
 
-    glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, diffuseMap);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, imageWidth, imageHeight, 0, GL_RGB, GL_FLOAT, image);
-    //glGenerateMipmap(GL_TEXTURE_2D);
+    //glActiveTexture(GL_TEXTURE0);
+    //glBindTexture(GL_TEXTURE_2D, diffuseMap);
+
+
+    //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+    //if (image)
+    //{
+    //    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, imageWidth, imageHeight, 0, GL_RGB, GL_UNSIGNED_BYTE, image);
+    //    glGenerateMipmap(GL_TEXTURE_2D);
+    //}
+    //else
+    //{
+    //    std::cout << "Failed to load texture" << std::endl;
+    //}
     //stbi_image_free(image);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-    glBindTexture(GL_TEXTURE_2D, 0);
+    //glBindTexture(GL_TEXTURE_2D, 0);
 
-    // Specular map
-    image = readPPM("../textures/metal_roof_spec_512x512.ppm", imageWidth, imageHeight);
-    glBindTexture(GL_TEXTURE_2D, specularMap);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, imageWidth, imageHeight, 0, GL_RGB, GL_FLOAT, image);
-    glGenerateMipmap(GL_TEXTURE_2D);
-    stbi_image_free(image);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-    glBindTexture(GL_TEXTURE_2D, 0);
+    //glGenTextures(1, &specularMap);
+    //glBindTexture(GL_TEXTURE_2D, specularMap);
+
+    //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+
+    //// Specular map
+    //image = stbi_load("../textures/right.jpg", &imageWidth, &imageHeight, &channel, 0);
+
+    //if (image)
+    //{
+    //    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, imageWidth, imageHeight, 0, GL_RGB, GL_UNSIGNED_BYTE, image);
+    //    glGenerateMipmap(GL_TEXTURE_2D);
+    //}
+    //else
+    //{
+    //    std::cout << "Failed to load texture" << std::endl;
+    //}
+    //stbi_image_free(image);
+    //glBindTexture(GL_TEXTURE_2D, 0);
 
 }
 

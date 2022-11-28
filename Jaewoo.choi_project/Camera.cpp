@@ -7,13 +7,14 @@ Purpose: <This file contains definitions of member functions of class Camera.
 Decide position and view of camera with camera vector>
 Language: <c++>
 Platform: <Visual studio 2019, OpenGL 4.5, Window 64bit>
-Project: <jaewoo.choi_CS300_2>
+Project: <jaewoo.choi_CS300_3>
 Author: <Jaewoo Choi, jaewoo.choi, 55532>
 Creation date: 25/09/2022
 End Header --------------------------------------------------------*/
 #include "Camera.h"
 #include"glhelper.h"
 #include "glm/gtc/matrix_transform.hpp"
+#include "math.h"
 Camera::Camera(glm::vec3 eye) :eye(eye), pitch(0), yaw(-90.0f), angle(0)
 {
     cameraTarget = glm::vec3(0.0f, 0.0f, 0.0f);
@@ -30,37 +31,51 @@ Camera::Camera(glm::vec3 eye, glm::vec3 _direction) :eye(eye), cameraDirection(_
     cameraRight = glm::normalize(glm::cross(glm::vec3(0.0f, 1.0f, 0.0f), _direction));
     cameraUp = glm::cross(_direction, cameraRight);
 }
-void Camera::Update(float dt)
+void Camera::Update(float )
 {
-    float speed = 0.0005f;
+    float speed = 0.01f;
 
     if (glfwGetKey(GLHelper::ptr_window, GLFW_KEY_UP))
     {
-        eye.y += speed * dt;
+        eye.y += speed ;
     }
     if (glfwGetKey(GLHelper::ptr_window, GLFW_KEY_DOWN))
     {
-        eye.y -= speed * dt;
+        eye.y -= speed ;
     }
     if (glfwGetKey(GLHelper::ptr_window, GLFW_KEY_W))
     {
-        eye += speed * dt * cameraFront;
+        eye += speed *  cameraFront;
     }
     if (glfwGetKey(GLHelper::ptr_window, GLFW_KEY_S))
     {
-        eye -= speed * dt * cameraFront;
+        eye -= speed *  cameraFront;
     }
     if (glfwGetKey(GLHelper::ptr_window, GLFW_KEY_A))
     {
-        eye -= glm::normalize(glm::cross(cameraFront, cameraUp)) * speed * dt;
+        eye -= glm::normalize(glm::cross(cameraFront, cameraUp)) * speed ;
     }
     if (glfwGetKey(GLHelper::ptr_window, GLFW_KEY_D))
     {
-        eye += glm::normalize(glm::cross(cameraFront, cameraUp)) * speed * dt;
+        eye += glm::normalize(glm::cross(cameraFront, cameraUp)) * speed ;
     }
-
+    if (glfwGetKey(GLHelper::ptr_window, GLFW_KEY_E))
+    {
+        yaw += speed *10.f;
+    }
+    if (glfwGetKey(GLHelper::ptr_window, GLFW_KEY_Q))
+    {
+        yaw -= speed *10.f;
+    }
+    cameraFront.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
+    cameraFront.y = sin(glm::radians(pitch));
+    cameraFront.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
+    
+    cameraFront = glm::normalize(cameraFront);
+    cameraRight = glm::normalize(glm::cross(cameraFront, glm::vec3(0,1,0) ));
+    cameraUp = glm::normalize(glm::cross(cameraRight, cameraFront));
     view = glm::lookAt(eye, eye + cameraFront, cameraUp);
-
+   // view = glm::rotate(view, angle_, {0,1,0});
 }
 glm::vec3 Camera::mouse_update()
 {
@@ -97,7 +112,7 @@ glm::vec3 Camera::mouse_update()
         mouse_start = false;
     }
 
-    glm::vec3 camDirection= cameraDirection;
+    camDirection= cameraDirection;
     camDirection.x += cos(glm::radians(yaw)) * cos(glm::radians(pitch));
     camDirection.y += sin(glm::radians(pitch));
     camDirection.z += sin(glm::radians(yaw)) * cos(glm::radians(pitch));
@@ -119,4 +134,9 @@ glm::vec3 Camera::GetEye()
 glm::vec3 Camera::GetFront()
 {
     return cameraFront;
+}
+
+float Camera::GetAngle()
+{
+    return angle_;
 }

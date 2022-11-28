@@ -6,7 +6,7 @@ File Name: Camera.h
 Purpose: <This file contains declaration of class Camera.>
 Language: <c++>
 Platform: <Visual studio 2019, OpenGL 4.5, Window 64bit>
-Project: <jaewoo.choi_CS300_2>
+Project: <jaewoo.choi_CS300_3>
 Author: <Jaewoo Choi, jaewoo.choi, 55532>
 Creation date: 25/09/2022
 End Header --------------------------------------------------------*/
@@ -20,11 +20,12 @@ public:
     Camera() = default;
     Camera(glm::vec3 eye);
     Camera(glm::vec3 eye, glm::vec3 _direction);
-    void Update(float dt);
+    void Update(float );
     glm::vec3 mouse_update();
     glm::mat4& GetViewMatrix();
     glm::vec3 GetEye();
     glm::vec3 GetFront();
+    float GetAngle();
 
     glm::mat4      view = {
     1,0,0,0,
@@ -38,8 +39,12 @@ public:
     glm::vec3 cameraUp{ 0 };
     glm::vec3 cameraRight{ 0 };
     glm::vec3 cameraFront{ 0 };
+    glm::vec3 camDirection{ 0 };
     glm::vec2 direction{ 0 };
     float pitch{ 0 };
     float yaw{ 0 };
     glm::vec3 angle{ 0 };
+    float angle_{ 0 };
+
+
 };

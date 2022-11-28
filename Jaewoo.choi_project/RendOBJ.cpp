@@ -24,9 +24,55 @@ RendOBJ::~RendOBJ() {}
 
 void RendOBJ::init()
 {
-    meshes.push_back(LoadOBJ("../object/quad.obj"));
-    meshes[0].init("../shaders/PhongShading.vert", "../shaders/PhongShading_plain.frag", phongShadingID, phongLightID, blinnID,{ 0,-0.5f,0 }, { 5.f,5.f,1.f }, { -HALF_PI,0,0 }, numberLamp);
-    meshes[0].setTexture();
+    RefractiveIndex.reserve(10);
+    RefractiveIndex.push_back(1.0003f);
+    RefractiveIndex.push_back(1.0001f);
+    RefractiveIndex.push_back(1.3330f);
+    RefractiveIndex.push_back(1.4700f);
+    RefractiveIndex.push_back(1.3100f);
+    RefractiveIndex.push_back(1.4600f);
+    RefractiveIndex.push_back(2.4200f);
+    RefractiveIndex.push_back(1.4900f);
+    RefractiveIndex.push_back(1.4900f);
+    RefractiveIndex.push_back(1.4900f);
+    FresnelConstant.resize(10, 0.5f);
+    glGenFramebuffers(1, &FBO);
+    glBindFramebuffer(GL_FRAMEBUFFER, FBO);
+
+
+    cubemapTexture.resize(faces.size());
+    glGenTextures(6, cubemapTexture.data());
+    int width, height, nrComponents;
+    for (unsigned int i = 0; i < faces.size(); i++)
+    {
+        glBindTexture(GL_TEXTURE_2D, cubemapTexture[i]);
+
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 1600, 1000, 0, GL_RGB, GL_UNSIGNED_BYTE, nullptr);
+
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, cubemapTexture[i], 0);
+
+    }
+    glEnable(GL_DEPTH_TEST);
+    glDepthFunc(GL_LESS);
+
+    GLenum data[1] = { GL_COLOR_ATTACHMENT0 };
+    glDrawBuffers(1, data);
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+    meshes.push_back(ReverseLoadOBJ("../object/cube2.obj"));
+    //meshes[0].setTexture();
+    //meshes[0].initFrame("../shaders/skybox.vert", "../shaders/skybox.frag", "../shaders/PhongShading.geo", { 0,0,0 }, { 20.f,20.f,20.f }, { 0,0,0 });
+    meshes[0].initSkyBox("../shaders/skybox.vert", "../shaders/skybox.frag", "../shaders/PhongShading.geo", { 0,0,0 }, { 1.f,1.f,1.f }, { 0,0,0 });
+
+    meshes.push_back(LoadOBJ("../object/sphere.obj"));
+    meshes[1].init("../shaders/PhongShading.vert", "../shaders/PhongShading.frag", { 0,0,0 }, { 1.f,1.f,1.f }, { 0,0,0 }, numberLamp);
+    //meshes.push_back(LoadOBJ("../object/quad.obj"));
+    //meshes[0].init("../shaders/PhongShading.vert", "../shaders/PhongShading_plain.frag", phongShadingID, phongLightID, blinnID, { 0,-0.5f,0 }, { 5.f,5.f,1.f }, { -HALF_PI,0,0 }, numberLamp);
+    //
 
     float theta = 0;
     float angle = TWO_PI / numberLamp;
@@ -36,38 +82,35 @@ void RendOBJ::init()
         lampSetting.push_back(lampSet());
         dirlight.push_back(DirLight());
 
-        dirlight[i].position = { 2 * cos(theta),0,2 * sin(theta)};
+        dirlight[i].position = { 2 * cos(theta),0,2 * sin(theta) };
     }
-    meshes.push_back(CreateSphere(60, 60));
-    meshes[1].initLamp("../shaders/lamp.vert", "../shaders/lamp.frag");
+     meshes.push_back(CreateSphere(60, 60));
+    meshes[2].initLamp("../shaders/lamp.vert", "../shaders/lamp.frag");
 
-    meshes.push_back(CreateOrbit(100));
-    meshes[2].initLine("../shaders/line.vert", "../shaders/line.frag", { 0,0,0 }, { 1.f,1.f,1.f }, { 0,0,0 });
-
-    meshes.push_back(LoadOBJ("../object/bunny_high_poly.obj"));
-    //meshes[3].init("../shaders/PhongShading.vert", "../shaders/PhongShading.frag", { 0,0,0 }, { 1.f,1.f,1.f }, { 0,0,0 }, numberLamp);
-    
-
-    meshes.push_back(LoadOBJ("../object/sphere.obj"));
-   // meshes[4].init("../shaders/PhongShading.vert", "../shaders/PhongShading.frag", { 0,0,0 }, { 1.f,1.f,1.f }, { 0,0,0 }, numberLamp);
+    //meshes.push_back(CreateOrbit(100));
+    //meshes[2].initLine("../shaders/line.vert", "../shaders/line.frag", { 0,0,0 }, { 1.f,1.f,1.f }, { 0,0,0 });
 
     meshes.push_back(LoadOBJ("../object/cube2.obj"));
-    //meshes[5].init("../shaders/PhongShading.vert", "../shaders/PhongShading.frag", { 0,0,0 }, { 1.f,1.f,1.f }, { 0,0,0 }, numberLamp);
+    //meshes[3].init("../shaders/PhongShading.vert", "../shaders/PhongShading.frag", { 0,0,0 }, { 1.f,1.f,1.f }, { 0,0,0 }, numberLamp);
+
+
+    meshes.push_back(LoadOBJ("../object/bunny_high_poly.obj"));
+    //meshes[4].init("../shaders/PhongShading.vert", "../shaders/PhongShading.frag", { 0,0,0 }, { 1.f,1.f,1.f }, { 0,0,0 }, numberLamp);
 
     meshes.push_back(LoadOBJ("../object/4Sphere.obj"));
-    //meshes[6].init("../shaders/PhongShading.vert", "../shaders/PhongShading.frag", { 0,0,0 }, { 1.f,1.f,1.f }, { 0,0,0 }, numberLamp);
+    //meshes[5].init("../shaders/PhongShading.vert", "../shaders/PhongShading.frag", { 0,0,0 }, { 1.f,1.f,1.f }, { 0,0,0 }, numberLamp);
 
     meshes.push_back(LoadOBJ("../object/bunny.obj"));
-    //meshes[7].init("../shaders/PhongShading.vert", "../shaders/PhongShading.frag", { 0,0,0 }, { 1.f,1.f,1.f }, { 0,0,0 }, numberLamp);
-    
-    InitPhongLighting();
-    InitblinnLighting();
-    InitPhongShading();
+    //meshes[6].init("../shaders/PhongShading.vert", "../shaders/PhongShading.frag", { 0,0,0 }, { 1.f,1.f,1.f }, { 0,0,0 }, numberLamp);
 
-    camera = { {0.f, 3.f, 10.0f} };
+
+
+    
+    InitPhongShading();
+    camera = { {0.f, 0.5f, 3.f} };
 
     SetView();
-    
+
 }
 
 void RendOBJ::Update(float deltaTime)
@@ -82,14 +125,46 @@ void RendOBJ::Update(float deltaTime)
 
 void RendOBJ::Draw()
 {
-    glClearColor(global.fogColor.x, global.fogColor.y, global.fogColor.z, 1.0f);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    //glClearColor(global.fogColor.x, global.fogColor.y, global.fogColor.z, 1.0f);
+    glEnable(GL_DEPTH_TEST);
+    glm::mat4 model = glm::mat4(1.0f);
+    glm::mat4 _view = glm::mat4(1.0f);
+    glm::mat4 _projection = glm::mat4(1.0f);
+    glm::mat4 tmp = glm::mat4(1.0f);
 
-    meshes[0].draw(camera.GetViewMatrix(), projection, light, camera.GetEye(), dirlight, numberLamp,global, mate);
-    meshes[1].drawLamp(camera.GetViewMatrix(), projection, numberLamp, dirlight, lampSetting);
-    meshes[2].drawLine({ 1,1,1 }, camera.GetViewMatrix(), projection, light, camera.GetEye(), {0,0});
-    //meshes[3].drawLight(camera.GetViewMatrix(), projection, light, camera.GetEye(), dirlight, numberLamp);
+    glm::mat4 skyBoxTransform[6];
+    skyBoxTransform[0] = (glm::perspective(glm::radians(90.0f), 1.f, 0.1f, 100.f) * glm::lookAt(glm::vec3(0), glm::vec3(1.0, 0.0, 0.0), glm::vec3(0.0, 1.0, 0.0)));//right
+    skyBoxTransform[1] = (glm::perspective(glm::radians(90.0f), 1.f, 0.1f, 100.f) * glm::lookAt(glm::vec3(0), glm::vec3(-1.0, 0.0, 0.0), glm::vec3(0.0, 1.0, 0.0)));//left
+    skyBoxTransform[2] = (glm::perspective(glm::radians(90.0f), 1.f, 0.1f, 100.f) * glm::lookAt(glm::vec3(0), glm::vec3(0.0, 1.0, 0.0), glm::vec3(0.0, 0.0, -1.0)));//top
+    skyBoxTransform[3] = (glm::perspective(glm::radians(90.0f), 1.f, 0.1f, 100.f) * glm::lookAt(glm::vec3(0), glm::vec3(0.0, -1.0, 0.0), glm::vec3(0.0, 0.0, 1.0)));//bottom
+    skyBoxTransform[4] = (glm::perspective(glm::radians(90.0f), 1.f, 0.1f, 100.f) * glm::lookAt(glm::vec3(0), glm::vec3(0.0, 0.0, -1.0), glm::vec3(0.0, 1.0, 0.0)));//back
+    skyBoxTransform[5] = (glm::perspective(glm::radians(90.0f), 1.f, 0.1f, 100.f) * glm::lookAt(glm::vec3(0), glm::vec3(0.0, 0.0, 1.0), glm::vec3(0.0, 1.0, 0.0)));//front
+    for (int i = 0; i < 6; i++)
+    {
+        glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        glBindFramebuffer(GL_FRAMEBUFFER, FBO);
+        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, cubemapTexture[i], 0);
 
+
+
+        model = glm::mat4(1.0f);
+        _projection = skyBoxTransform[i];
+        _view = glm::mat4(1);
+
+        meshes[0].drawSkyBox(_view, _projection, camera);
+        meshes[2].drawLamp(_view, _projection, numberLamp, dirlight, lampSetting);
+
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    }
+    glDisable(GL_DEPTH_TEST);
+    meshes[0].drawSkyBox(camera.GetViewMatrix(), projection, camera);
+    glEnable(GL_DEPTH_TEST);
+    meshes[2].drawLamp(camera.GetViewMatrix(), projection, numberLamp, dirlight, lampSetting);
+
+    
+
+    
     ImGui_ImplOpenGL3_NewFrame();
     ImGui_ImplGlfw_NewFrame();
     ImGui::NewFrame();
@@ -99,8 +174,10 @@ void RendOBJ::Draw()
 
     ImGui::Begin("Controls");
     DrawBeforeImGui();
+    
 
-    //meshes[10].drawLight(camera.GetViewMatrix(), projection, light, camera.GetEye(), dirlight);
+    //meshes[8].drawLight({1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1}, projection, light, camera.GetEye(), dirlight, numberLamp, global, mate, typeMapping, shaderType, phongShadingID, phongLightID, blinnID);
+
 
 }
 
@@ -112,7 +189,7 @@ void RendOBJ::OnImGuiRender()
     "Light#13","Light#14", "Light#15", "Light#16", };
     static const char* light_current_item = Lightitems[0];
 
-    const char* LightType[3] = { "Point","Direction", "Spot"};
+    const char* LightType[3] = { "Point","Direction", "Spot" };
     static const char* type_current_item = LightType[0];
 
     if (ImGui::CollapsingHeader("Light"))
@@ -121,7 +198,7 @@ void RendOBJ::OnImGuiRender()
         numberLamp = numberLamp;
 
         ImGui::Checkbox("Pause Rotation", &isRotationLamp);
-        if(ImGui::Button("Scenario 1")){
+        if (ImGui::Button("Scenario 1")) {
             int j = 0;
             for (int i = 0; i < 16; i++)
             {
@@ -141,9 +218,9 @@ void RendOBJ::OnImGuiRender()
             global.attenuation.z = 2.f;
             numberLamp = 6;
         }
-        if(ImGui::Button("Scenario 2")){
+        if (ImGui::Button("Scenario 2")) {
             int j = 0;
-            float a = 1.f/255.f;
+            float a = 1.f / 255.f;
             for (int i = 0; i < 16; i++)
             {
                 lightSwitch[i] = false;
@@ -178,18 +255,18 @@ void RendOBJ::OnImGuiRender()
             dirlight[5].diffuse = dirlight[5].ambient;
             dirlight[5].specular = dirlight[5].ambient;
             lampSetting[5].Diffuse = { dirlight[5].ambient ,1.0f };
-            
+
             dirlight[6].ambient = { 226 * a,184 * a,28 * a };
             dirlight[6].diffuse = dirlight[6].ambient;
             dirlight[6].specular = dirlight[6].ambient;
             lampSetting[6].Diffuse = { dirlight[6].ambient ,1.0f };
             global.attenuation.z = 0.45f;
-            type_current_item =  LightType[2];
+            type_current_item = LightType[2];
             numberLamp = j;
 
 
         }
-        if(ImGui::Button("Scenario 3")){
+        if (ImGui::Button("Scenario 3")) {
             int j = 0;
             float a = 1.f / 255.f;
             for (int i = 0; i < 16; i++)
@@ -328,47 +405,48 @@ void RendOBJ::OnImGuiRender()
 void RendOBJ::UnLoad()
 {
     meshes.clear();
-    //glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-    //useNormal.r = 1;
+
 }
 
 void RendOBJ::InitPhongShading()
 {
-    
-    meshes[3].init("../shaders/PhongShading.vert", "../shaders/PhongShading.frag", phongShadingID, phongLightID, blinnID, { 0,0,0 }, { 0.5f,0.5f,0.5f }, { 0,0,0 }, numberLamp);
-    meshes[4].init("../shaders/PhongShading.vert", "../shaders/PhongShading.frag", phongShadingID, phongLightID, blinnID, { 0,0,0 }, { 0.5f,0.5f,0.5f }, { 0,0,0 }, numberLamp);
-    meshes[5].init("../shaders/PhongShading.vert", "../shaders/PhongShading.frag", phongShadingID, phongLightID, blinnID, { 0,0,0 }, { 0.5f,0.5f,0.5f }, { 0,0,0 }, numberLamp);
-    meshes[6].init("../shaders/PhongShading.vert", "../shaders/PhongShading.frag", phongShadingID, phongLightID, blinnID, { 0,0,0 }, { 0.5f,0.5f,0.5f }, { 0,0,0 }, numberLamp);
-    meshes[7].init("../shaders/PhongShading.vert", "../shaders/PhongShading.frag", phongShadingID, phongLightID, blinnID, { 0,0,0 }, { 0.5f,0.5f,0.5f }, { 0,0,0 }, numberLamp);
+
+    //meshes[8].initSkyBox("../shaders/PhongShading.vert", "../shaders/PhongShading.frag","../shaders/PhongShading.geo", { 0,3,0 }, { 20.f,20.f,20.f }, { 0,0,0 });
+    meshes[3].init("../shaders/PhongShading.vert", "../shaders/PhongShading.frag",  { 0,0,0 }, { 0.5f,0.5f,0.5f }, { 0,0,0 }, numberLamp);
+    meshes[4].init("../shaders/PhongShading.vert", "../shaders/PhongShading.frag",  { 0,0,0 }, { 0.5f,0.5f,0.5f }, { 0,0,0 }, numberLamp);
+    meshes[5].init("../shaders/PhongShading.vert", "../shaders/PhongShading.frag",  { 0,0,0 }, { 0.5f,0.5f,0.5f }, { 0,0,0 }, numberLamp);
+    meshes[6].init("../shaders/PhongShading.vert", "../shaders/PhongShading.frag",  { 0,0,0 }, { 0.5f,0.5f,0.5f }, { 0,0,0 }, numberLamp);
+    //meshes[7].init("../shaders/PhongShading.vert", "../shaders/PhongShading.frag",  { 0,0,0 }, { 0.5f,0.5f,0.5f }, { 0,0,0 }, numberLamp);
+    //meshes[8].init("../shaders/PhongShading.vert", "../shaders/PhongShading.frag", phongShadingID, phongLightID, blinnID, { 0,0,0 }, { 0.5f,0.5f,0.5f }, { 0,0,0 }, numberLamp);
+
 }
 
 void RendOBJ::InitblinnLighting()
 {
 
-    meshes[3].init("../shaders/lightBlinn.vert", "../shaders/lightBlinn.frag", phongShadingID, phongLightID, blinnID, { 0,0,0 }, { 0.5f,0.5f,0.5f }, { 0,0,0 }, numberLamp);
-    meshes[4].init("../shaders/lightBlinn.vert", "../shaders/lightBlinn.frag", phongShadingID, phongLightID, blinnID, { 0,0,0 }, { 0.5f,0.5f,0.5f }, { 0,0,0 }, numberLamp);
-    meshes[5].init("../shaders/lightBlinn.vert", "../shaders/lightBlinn.frag", phongShadingID, phongLightID, blinnID, { 0,0,0 }, { 0.5f,0.5f,0.5f }, { 0,0,0 }, numberLamp);
-    meshes[6].init("../shaders/lightBlinn.vert", "../shaders/lightBlinn.frag", phongShadingID, phongLightID, blinnID, { 0,0,0 }, { 0.5f,0.5f,0.5f }, { 0,0,0 }, numberLamp);
-    meshes[7].init("../shaders/lightBlinn.vert", "../shaders/lightBlinn.frag", phongShadingID, phongLightID, blinnID, { 0,0,0 }, { 0.5f,0.5f,0.5f }, { 0,0,0 }, numberLamp);
+    //meshes[3].init("../shaders/lightBlinn.vert", "../shaders/lightBlinn.frag", phongShadingID, phongLightID, blinnID, { 0,0,0 }, { 0.5f,0.5f,0.5f }, { 0,0,0 }, numberLamp);
+    //meshes[4].init("../shaders/lightBlinn.vert", "../shaders/lightBlinn.frag", phongShadingID, phongLightID, blinnID, { 0,0,0 }, { 0.5f,0.5f,0.5f }, { 0,0,0 }, numberLamp);
+    //meshes[5].init("../shaders/lightBlinn.vert", "../shaders/lightBlinn.frag", phongShadingID, phongLightID, blinnID, { 0,0,0 }, { 0.5f,0.5f,0.5f }, { 0,0,0 }, numberLamp);
+    //meshes[6].init("../shaders/lightBlinn.vert", "../shaders/lightBlinn.frag", phongShadingID, phongLightID, blinnID, { 0,0,0 }, { 0.5f,0.5f,0.5f }, { 0,0,0 }, numberLamp);
+    //meshes[7].init("../shaders/lightBlinn.vert", "../shaders/lightBlinn.frag", phongShadingID, phongLightID, blinnID, { 0,0,0 }, { 0.5f,0.5f,0.5f }, { 0,0,0 }, numberLamp);
 }
 
 void RendOBJ::InitPhongLighting()
 {
-    meshes[3].init("../shaders/PhongLighting.vert", "../shaders/PhongLighting.frag", phongShadingID, phongLightID, blinnID, { 0,0,0 }, { 0.5f,0.5f,0.5f }, { 0,0,0 }, numberLamp);
-    meshes[4].init("../shaders/PhongLighting.vert", "../shaders/PhongLighting.frag", phongShadingID, phongLightID, blinnID, { 0,0,0 }, { 0.5f,0.5f,0.5f }, { 0,0,0 }, numberLamp);
-    meshes[5].init("../shaders/PhongLighting.vert", "../shaders/PhongLighting.frag", phongShadingID, phongLightID, blinnID, { 0,0,0 }, { 0.5f,0.5f,0.5f }, { 0,0,0 }, numberLamp);
-    meshes[6].init("../shaders/PhongLighting.vert", "../shaders/PhongLighting.frag", phongShadingID, phongLightID, blinnID, { 0,0,0 }, { 0.5f,0.5f,0.5f }, { 0,0,0 }, numberLamp);
-    meshes[7].init("../shaders/PhongLighting.vert", "../shaders/PhongLighting.frag", phongShadingID, phongLightID, blinnID, { 0,0,0 }, { 0.5f,0.5f,0.5f }, { 0,0,0 }, numberLamp);
+    //meshes[3].init("../shaders/PhongLighting.vert", "../shaders/PhongLighting.frag", phongShadingID, phongLightID, blinnID, { 0,0,0 }, { 0.5f,0.5f,0.5f }, { 0,0,0 }, numberLamp);
+    //meshes[4].init("../shaders/PhongLighting.vert", "../shaders/PhongLighting.frag", phongShadingID, phongLightID, blinnID, { 0,0,0 }, { 0.5f,0.5f,0.5f }, { 0,0,0 }, numberLamp);
+    //meshes[5].init("../shaders/PhongLighting.vert", "../shaders/PhongLighting.frag", phongShadingID, phongLightID, blinnID, { 0,0,0 }, { 0.5f,0.5f,0.5f }, { 0,0,0 }, numberLamp);
+    //meshes[6].init("../shaders/PhongLighting.vert", "../shaders/PhongLighting.frag", phongShadingID, phongLightID, blinnID, { 0,0,0 }, { 0.5f,0.5f,0.5f }, { 0,0,0 }, numberLamp);
+    //meshes[7].init("../shaders/PhongLighting.vert", "../shaders/PhongLighting.frag", phongShadingID, phongLightID, blinnID, { 0,0,0 }, { 0.5f,0.5f,0.5f }, { 0,0,0 }, numberLamp);
 }
 
 void RendOBJ::InitBunny()
 {
     meshes.push_back(CreatePlane(2, 2));
-   // meshes[0].init("../shaders/PhongShading.vert", "../shaders/triangle.frag", { 0,0,0 }, { 5.f,5.f,1.f }, { 0,0,0 }, false);
-    //meshes.push_back(LoadOBJ("../object/quad.obj"));
-    //meshes[0].init("../shaders/triangle.vert", "../shaders/triangle.frag");
+    // meshes[0].init("../shaders/PhongShading.vert", "../shaders/triangle.frag", { 0,0,0 }, { 5.f,5.f,1.f }, { 0,0,0 }, false);
+     //meshes.push_back(LoadOBJ("../object/quad.obj"));
+     //meshes[0].init("../shaders/triangle.vert", "../shaders/triangle.frag");
 }
-
 
 void RendOBJ::InitOrbit()
 {
@@ -415,22 +493,22 @@ void RendOBJ::SetView()
     0,0,0,1
     };
     //eye = { 0.f, 0.f, 10.0f };
-    light = { 0.0f, -2.0f, 0.0f };
+    light = { 0.0f, 0.0f, 0.0f };
 
     //view = glm::rotate(view, PI, glm::vec3(0.0f, 1.0f, 0.0f));
 
     //view = glm::rotate(view, PI, glm::vec3(1.0f, 0.0f, 0.0f));
     view = glm::translate(view, camera.eye);
-    projection = glm::perspective(glm::radians(45.0f), 1.f, 0.1f, 100.0f);
+    projection = glm::perspective(glm::radians(90.0f), 1.f, 0.1f, 100.0f);
 
 }
 
 void RendOBJ::DrawBeforeImGui()
 {
 
-    const char* items[] = { "bunny_high_poly", "sphere", "cube2", "4Sphere", "bunny" };
+    const char* items[] = { "sphere", "cube2", "bunny_high_poly", "4Sphere", "bunny" };
     static const char* current_item = items[0];
-    
+
 
     if (ImGui::CollapsingHeader("Model"))
     {
@@ -466,91 +544,25 @@ void RendOBJ::DrawBeforeImGui()
             }
             ImGui::EndCombo();
         }
-        if (current_item == items[0] && ImGui::Button("Vertex Normal"))
-        {
-            vertxNrm[0] = !vertxNrm[0];
-        }
-        if (current_item == items[0] && ImGui::Button("Face Normal"))
-        {
-            faceNrm[0] = !faceNrm[0];
-        }
-        if (current_item == items[1] && ImGui::Button("Vertex Normal"))
-        {
-            vertxNrm[1] = !vertxNrm[1];
-        }
-        if (current_item == items[1] && ImGui::Button("Face Normal"))
-        {
-            faceNrm[1] = !faceNrm[1];
-        }
-        if (current_item == items[2] && ImGui::Button("Vertex Normal"))
-        {
-            vertxNrm[2] = !vertxNrm[2];
-        }
-        if (current_item == items[2] && ImGui::Button("Face Normal"))
-        {
-            faceNrm[2] = !faceNrm[2];
-        }
-        if (current_item == items[3] && ImGui::Button("Vertex Normal"))
-        {
-            vertxNrm[3] = !vertxNrm[3];
-        }
-        if (current_item == items[3] && ImGui::Button("Face Normal"))
-        {
-            faceNrm[3] = !faceNrm[3];
-        }
-
-        if (current_item == items[4] && ImGui::Button("Vertex Normal"))
-        {
-            vertxNrm[4] = !vertxNrm[4];
-        }
-        if (current_item == items[4] && ImGui::Button("Face Normal"))
-        {
-            faceNrm[4] = !faceNrm[4];
-        }
-        
     }
     if (meshSwitch[0])
-        meshes[3].drawLight(camera.GetViewMatrix(), projection, light, camera.GetEye(), dirlight, numberLamp, global, mate, typeMapping, shaderType, phongShadingID, phongLightID, blinnID);
+        meshes[1].draw(camera.GetViewMatrix(), projection, light, camera.GetEye(), dirlight, numberLamp, global, mate, cubemapTexture, reflection, refraction, indexFresnel,RefractiveIndex, FresnelConstant, FresnelPower);
     else if (meshSwitch[1])
-        meshes[4].drawLight(camera.GetViewMatrix(), projection, light, camera.GetEye(), dirlight, numberLamp, global, mate, typeMapping, shaderType, phongShadingID, phongLightID, blinnID);
+        meshes[3].draw(camera.GetViewMatrix(), projection, light, camera.GetEye(), dirlight, numberLamp, global, mate, cubemapTexture, reflection, refraction, indexFresnel, RefractiveIndex, FresnelConstant, FresnelPower);
     else if (meshSwitch[2])
-        meshes[5].drawLight(camera.GetViewMatrix(), projection, light, camera.GetEye(), dirlight, numberLamp, global, mate, typeMapping, shaderType, phongShadingID, phongLightID, blinnID);
+        meshes[4].draw(camera.GetViewMatrix(), projection, light, camera.GetEye(), dirlight, numberLamp, global, mate, cubemapTexture, reflection, refraction, indexFresnel, RefractiveIndex, FresnelConstant, FresnelPower);
     else if (meshSwitch[3])
-        meshes[6].drawLight(camera.GetViewMatrix(), projection, light, camera.GetEye(), dirlight, numberLamp, global, mate, typeMapping, shaderType, phongShadingID, phongLightID, blinnID);
+        meshes[5].draw(camera.GetViewMatrix(), projection, light, camera.GetEye(), dirlight, numberLamp, global, mate, cubemapTexture, reflection, refraction, indexFresnel, RefractiveIndex, FresnelConstant, FresnelPower);
     else if (meshSwitch[4])
-        meshes[7].drawLight(camera.GetViewMatrix(), projection, light, camera.GetEye(), dirlight, numberLamp, global, mate, typeMapping, shaderType, phongShadingID, phongLightID, blinnID);
+        meshes[6].draw(camera.GetViewMatrix(), projection, light, camera.GetEye(), dirlight, numberLamp, global, mate, cubemapTexture, reflection, refraction, indexFresnel, RefractiveIndex, FresnelConstant, FresnelPower);
 
-    if (vertxNrm[0])
-        meshes[3].drawLine(useNormal, camera.GetViewMatrix(), projection, light, camera.GetEye(), { 1,0 });
-    if (faceNrm[0])
-        meshes[3].drawFaceLine(useNormal, camera.GetViewMatrix(), projection, light, camera.GetEye(), { 1,0 });
-
-    if (vertxNrm[1])
-        meshes[4].drawLine(useNormal, camera.GetViewMatrix(), projection, light, camera.GetEye(), { 1,0 });
-    if (faceNrm[1])
-        meshes[4].drawFaceLine(useNormal, camera.GetViewMatrix(), projection, light, camera.GetEye(), { 1,0 });
-
-    if (vertxNrm[2])
-        meshes[5].drawLine(useNormal, camera.GetViewMatrix(), projection, light, camera.GetEye(), { 1,0 });
-    if (faceNrm[2])
-        meshes[5].drawFaceLine(useNormal, camera.GetViewMatrix(), projection, light, camera.GetEye(), { 1,0 });
-
-    if (vertxNrm[3])
-        meshes[6].drawLine(useNormal, camera.GetViewMatrix(), projection, light, camera.GetEye(), { 1,0 });
-    if (faceNrm[3])
-        meshes[6].drawFaceLine(useNormal, camera.GetViewMatrix(), projection, light, camera.GetEye(), { 1,0 });
-
-    if (vertxNrm[4])
-        meshes[7].drawLine(useNormal, camera.GetViewMatrix(), projection, light, camera.GetEye(), { 1,0 });
-    if (faceNrm[4])
-        meshes[7].drawFaceLine(useNormal, camera.GetViewMatrix(), projection, light, camera.GetEye(), { 1,0 });
-    const char* shade_items[] = { "phongShading", "phongLighting","blinnShading" };
+    const char* shade_items[] = { "phongShading", "blinnShading" };
     static const char* shade_current_item = shade_items[0];
     if (ImGui::CollapsingHeader("Shader"))
     {
         if (ImGui::BeginCombo("Current Shader", shade_current_item)) // The second parameter is the label previewed before opening the combo.
         {
-            for (int n = 0; n < 3; n++)
+            for (int n = 0; n < 2; n++)
             {
                 bool is_selected = (shade_current_item == shade_items[n]);
                 if (ImGui::Selectable(shade_items[n], is_selected))
@@ -565,84 +577,55 @@ void RendOBJ::DrawBeforeImGui()
             }
             ImGui::EndCombo();
         }
-        if(ImGui::Button("reload shaders"))
+        if (ImGui::Button("reload shaders"))
         {
             ////////////////////////////////////////////////
+            init();
         }
     }
-    if(ImGui::CollapsingHeader("Material"))
+    const char* items_material[] = { "Air", "Hydrogen", "water", "Olive Oil", "Ice","Quartz", "Diamond", "Acrylic", "PlexiglasOil", "Lucite" };
+    static const char* current_item_material = items_material[0];
+    if (ImGui::CollapsingHeader("Material"))
     {
-        ImGui::ColorEdit3("Ambient", &mate.ambient.x);
-        ImGui::ColorEdit3("Diffuse",  &mate.diffuse.x);
-        ImGui::ColorEdit3("Specular", &mate.specular.x);
-        ImGui::ColorEdit3("Emissive", &mate.emissive.x);
-        if (ImGui::Button("Visualize UV"))
-        {
-            meshes[0].setTextureGrid();
-        }
-        if (ImGui::Button("Visualize Texture"))
-        {
-            meshes[0].setTexture();
-        }
-        const char* T1_items[] = { "None","Cyndrical", "Spherical", "cube", "Planar"};
-        static const char* T1_current_item = T1_items[0];
-        if (ImGui::BeginCombo("Texture Projection mode", T1_current_item))
-        {
-            for (int n = 0; n < 5; n++)
-            {
-                bool is_selected = (T1_current_item == T1_items[n]);
-                if (ImGui::Selectable(T1_items[n], is_selected))
-                {
-                    typeMapping = n;
-                    T1_current_item = T1_items[n];
-                }
-                if (is_selected)
-                {
-                    ImGui::SetItemDefaultFocus();
-                }
-            }
-            ImGui::EndCombo();
-        }
-        const char* T2_items[] = { "GPU", "CPU" };
-        static const char* T2_current_item = T2_items[0];
-        if (ImGui::BeginCombo("Texture Projection pipeline", T2_current_item))
-        {
-            for (int n = 0; n < 2; n++)
-            {
-                bool is_selected = (T2_current_item == T2_items[n]);
-                if (ImGui::Selectable(T2_items[n], is_selected))
-                {
+        ImGui::Checkbox("Visualize Reflection", &reflection);
+        ImGui::Checkbox("Visualize Refraction", &refraction);
 
-                    T2_current_item = T2_items[n];
-                }
-                if (is_selected)
-                {
-                    ImGui::SetItemDefaultFocus();
-                }
-            }
-            ImGui::EndCombo();
-        }
-        const char* T3_items[] = { "Position", "Normal" };
-        static const char* T3_current_item = T3_items[0];
-        if (ImGui::BeginCombo("Texture Entity", T3_current_item))
+        if (ImGui::BeginCombo("Loaded Model", current_item_material)) // The second parameter is the label previewed before opening the combo.
         {
-            for (int n = 0; n < 2; n++)
+            for (int n = 0; n < 10; n++)
             {
-                bool is_selected = (T3_current_item == T3_items[n]);
-                if (ImGui::Selectable(T3_items[n], is_selected))
+                bool is_selected = (current_item_material == items_material[n]);
+                if (ImGui::Selectable(items_material[n], is_selected))
                 {
-                    T3_current_item = T3_items[n];
-                }
-                if (is_selected)
-                {
-                    ImGui::SetItemDefaultFocus();
+                    materialSwitch[0] = false;
+                    materialSwitch[1] = false;
+                    materialSwitch[2] = false;
+                    materialSwitch[3] = false;
+                    materialSwitch[4] = false;
+                    materialSwitch[5] = false;
+                    materialSwitch[6] = false;
+                    materialSwitch[7] = false;
+                    materialSwitch[8] = false;
+                    materialSwitch[9] = false;
+                    materialSwitch[n] = true;
+                    current_item_material = items_material[n];
                 }
             }
             ImGui::EndCombo();
         }
-        ImGui::Button("recalculateUV");
+        for (int i = 0; i < 10; i++)
+        {
+            if (materialSwitch[i] == true)
+            {
+                indexFresnel = i;
+                ImGui::SliderFloat("Refractive Index", &RefractiveIndex[i], 1.f, 100.f, "%.4f", 0);
+                ImGui::SliderFloat("FresnelConstant", &FresnelConstant[i], 0.01f, 1.f, "%.4f", 0);
+            }
+        }
+        ImGui::SliderFloat("Fresnel Power", &FresnelPower, 0.f, 1.f, "%.6f", 0);
     }
-    if (ImGui::CollapsingHeader("Global Constant")) 
+    
+    if (ImGui::CollapsingHeader("Global Constant"))
     {
         ImGui::SliderFloat3("Attenuation", &global.attenuation.x, 0.f, 3.f);
         ImGui::ColorEdit3("Global Ambient", &global.ambient.x);
@@ -654,4 +637,3 @@ void RendOBJ::DrawBeforeImGui()
     if (global.fogMin > global.fogMax)
         global.fogMin = global.fogMax;
 }
-
