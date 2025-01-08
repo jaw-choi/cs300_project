@@ -63,12 +63,12 @@ void RendOBJ::init()
     glDrawBuffers(1, data);
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
-    meshes.push_back(ReverseLoadOBJ("../object/cube2.obj"));
+    meshes.push_back(LoadOBJ("../object/cube2.obj"));
     //meshes[0].setTexture();
     //meshes[0].initFrame("../shaders/skybox.vert", "../shaders/skybox.frag", "../shaders/PhongShading.geo", { 0,0,0 }, { 20.f,20.f,20.f }, { 0,0,0 });
     meshes[0].initSkyBox("../shaders/skybox.vert", "../shaders/skybox.frag", "../shaders/PhongShading.geo", { 0,0,0 }, { 1.f,1.f,1.f }, { 0,0,0 });
 
-    meshes.push_back(LoadOBJ("../object/sphere.obj"));
+    meshes.push_back(LoadOBJ("../object/sphere_modified.obj"));
     meshes[1].init("../shaders/PhongShading.vert", "../shaders/PhongShading.frag", { 0,0,0 }, { 1.f,1.f,1.f }, { 0,0,0 }, numberLamp);
     //meshes.push_back(LoadOBJ("../object/quad.obj"));
     //meshes[0].init("../shaders/PhongShading.vert", "../shaders/PhongShading_plain.frag", phongShadingID, phongLightID, blinnID, { 0,-0.5f,0 }, { 5.f,5.f,1.f }, { -HALF_PI,0,0 }, numberLamp);
@@ -84,7 +84,7 @@ void RendOBJ::init()
 
         dirlight[i].position = { 2 * cos(theta),0,2 * sin(theta) };
     }
-     meshes.push_back(CreateSphere(60, 60));
+    meshes.push_back(CreateSphere(60, 60));
     meshes[2].initLamp("../shaders/lamp.vert", "../shaders/lamp.frag");
 
     //meshes.push_back(CreateOrbit(100));
@@ -105,7 +105,7 @@ void RendOBJ::init()
 
 
 
-    
+
     InitPhongShading();
     camera = { {0.f, 0.5f, 3.f} };
 
@@ -162,9 +162,9 @@ void RendOBJ::Draw()
     glEnable(GL_DEPTH_TEST);
     meshes[2].drawLamp(camera.GetViewMatrix(), projection, numberLamp, dirlight, lampSetting);
 
-    
 
-    
+
+
     ImGui_ImplOpenGL3_NewFrame();
     ImGui_ImplGlfw_NewFrame();
     ImGui::NewFrame();
@@ -174,7 +174,7 @@ void RendOBJ::Draw()
 
     ImGui::Begin("Controls");
     DrawBeforeImGui();
-    
+
 
     //meshes[8].drawLight({1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1}, projection, light, camera.GetEye(), dirlight, numberLamp, global, mate, typeMapping, shaderType, phongShadingID, phongLightID, blinnID);
 
@@ -412,10 +412,10 @@ void RendOBJ::InitPhongShading()
 {
 
     //meshes[8].initSkyBox("../shaders/PhongShading.vert", "../shaders/PhongShading.frag","../shaders/PhongShading.geo", { 0,3,0 }, { 20.f,20.f,20.f }, { 0,0,0 });
-    meshes[3].init("../shaders/PhongShading.vert", "../shaders/PhongShading.frag",  { 0,0,0 }, { 0.5f,0.5f,0.5f }, { 0,0,0 }, numberLamp);
-    meshes[4].init("../shaders/PhongShading.vert", "../shaders/PhongShading.frag",  { 0,0,0 }, { 0.5f,0.5f,0.5f }, { 0,0,0 }, numberLamp);
-    meshes[5].init("../shaders/PhongShading.vert", "../shaders/PhongShading.frag",  { 0,0,0 }, { 0.5f,0.5f,0.5f }, { 0,0,0 }, numberLamp);
-    meshes[6].init("../shaders/PhongShading.vert", "../shaders/PhongShading.frag",  { 0,0,0 }, { 0.5f,0.5f,0.5f }, { 0,0,0 }, numberLamp);
+    meshes[3].init("../shaders/PhongShading.vert", "../shaders/PhongShading.frag", { 0,0,0 }, { 0.5f,0.5f,0.5f }, { 0,0,0 }, numberLamp);
+    meshes[4].init("../shaders/PhongShading.vert", "../shaders/PhongShading.frag", { 0,0,0 }, { 0.5f,0.5f,0.5f }, { 0,0,0 }, numberLamp);
+    meshes[5].init("../shaders/PhongShading.vert", "../shaders/PhongShading.frag", { 0,0,0 }, { 0.5f,0.5f,0.5f }, { 0,0,0 }, numberLamp);
+    meshes[6].init("../shaders/PhongShading.vert", "../shaders/PhongShading.frag", { 0,0,0 }, { 0.5f,0.5f,0.5f }, { 0,0,0 }, numberLamp);
     //meshes[7].init("../shaders/PhongShading.vert", "../shaders/PhongShading.frag",  { 0,0,0 }, { 0.5f,0.5f,0.5f }, { 0,0,0 }, numberLamp);
     //meshes[8].init("../shaders/PhongShading.vert", "../shaders/PhongShading.frag", phongShadingID, phongLightID, blinnID, { 0,0,0 }, { 0.5f,0.5f,0.5f }, { 0,0,0 }, numberLamp);
 
@@ -546,7 +546,7 @@ void RendOBJ::DrawBeforeImGui()
         }
     }
     if (meshSwitch[0])
-        meshes[1].draw(camera.GetViewMatrix(), projection, light, camera.GetEye(), dirlight, numberLamp, global, mate, cubemapTexture, reflection, refraction, indexFresnel,RefractiveIndex, FresnelConstant, FresnelPower);
+        meshes[1].draw(camera.GetViewMatrix(), projection, light, camera.GetEye(), dirlight, numberLamp, global, mate, cubemapTexture, reflection, refraction, indexFresnel, RefractiveIndex, FresnelConstant, FresnelPower);
     else if (meshSwitch[1])
         meshes[3].draw(camera.GetViewMatrix(), projection, light, camera.GetEye(), dirlight, numberLamp, global, mate, cubemapTexture, reflection, refraction, indexFresnel, RefractiveIndex, FresnelConstant, FresnelPower);
     else if (meshSwitch[2])
@@ -624,7 +624,7 @@ void RendOBJ::DrawBeforeImGui()
         }
         ImGui::SliderFloat("Fresnel Power", &FresnelPower, 0.f, 1.f, "%.6f", 0);
     }
-    
+
     if (ImGui::CollapsingHeader("Global Constant"))
     {
         ImGui::SliderFloat3("Attenuation", &global.attenuation.x, 0.f, 3.f);
